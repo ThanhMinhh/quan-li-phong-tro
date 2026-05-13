@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Home, FileText, AlertCircle, User, LogOut, Menu, X } from 'lucide-react';
+import { Home, FileText, AlertCircle, User, LogOut, Menu, X, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
@@ -49,6 +49,7 @@ export default function KhachThueDashboardLayout({
     { name: 'Tổng quan', href: '/khach-thue/dashboard', icon: Home },
     { name: 'Hóa đơn', href: '/khach-thue/dashboard/hoa-don', icon: FileText },
     { name: 'Sự cố', href: '/khach-thue/dashboard/su-co', icon: AlertCircle },
+    { name: 'Thông báo', href: '/khach-thue/dashboard/thong-bao', icon: Bell },
     { name: 'Thông tin cá nhân', href: '/khach-thue/dashboard/thong-tin', icon: User },
   ];
 
