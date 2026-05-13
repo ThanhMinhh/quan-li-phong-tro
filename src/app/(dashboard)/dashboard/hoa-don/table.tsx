@@ -161,6 +161,7 @@ type HoaDonTableProps = {
   onShare: (hoaDon: HoaDon) => void
   onPayment: (hoaDon: HoaDon) => void
   onDeleteMultiple?: (ids: string[]) => void
+  toaNhaList: ToaNha[]
 }
 
 const getPhongName = (phong: string | { maPhong: string }, phongList: Phong[]) => {
@@ -314,14 +315,7 @@ const createColumns = (props: HoaDonTableProps): ColumnDef<HoaDon>[] => [
             <Copy className="mr-2 h-4 w-4" />
             Sao chép link
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => props.onScreenshot(row.original)}>
-            <Camera className="mr-2 h-4 w-4" />
-            Xuất PDF
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => props.onDownload(row.original)}>
-            <Download className="mr-2 h-4 w-4" />
-            Tải HTML
-          </DropdownMenuItem>
+
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-destructive"
@@ -368,6 +362,8 @@ type HoaDonDataTableProps = HoaDonTableProps & {
   onSearchChange?: (value: string) => void
   statusFilter?: string
   onStatusChange?: (value: string) => void
+  toaNhaFilter?: string
+  onToaNhaChange?: (value: string) => void
   monthFilter?: string
   onMonthChange?: (value: string) => void
   yearFilter?: string
@@ -377,7 +373,7 @@ type HoaDonDataTableProps = HoaDonTableProps & {
 }
 
 export function HoaDonDataTable(props: HoaDonDataTableProps) {
-  const { data: initialData, onDeleteMultiple, searchTerm, onSearchChange, statusFilter, onStatusChange, monthFilter, onMonthChange, yearFilter, onYearChange, getMonthOptions, getYearOptions, ...tableProps } = props
+  const { data: initialData, onDeleteMultiple, searchTerm, onSearchChange, statusFilter, onStatusChange, toaNhaFilter, onToaNhaChange, toaNhaList, monthFilter, onMonthChange, yearFilter, onYearChange, getMonthOptions, getYearOptions, ...tableProps } = props
   const [data, setData] = React.useState(() => initialData)
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] =
@@ -482,17 +478,30 @@ export function HoaDonDataTable(props: HoaDonDataTableProps) {
               />
             </div>
           </div>
-          <Select value={statusFilter} onValueChange={onStatusChange}>
-            <SelectTrigger className="w-full sm:w-[140px]">
-              <SelectValue placeholder="Trạng thái" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tất cả</SelectItem>
-              <SelectItem value="chuaThanhToan">Chưa thanh toán</SelectItem>
-              <SelectItem value="daThanhToan">Đã thanh toán</SelectItem>
-              <SelectItem value="quaHan">Quá hạn</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={statusFilter} onValueChange={onStatusChange}>
+              <SelectTrigger className="w-full sm:w-[140px]">
+                <SelectValue placeholder="Trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                <SelectItem value="chuaThanhToan">Chưa thanh toán</SelectItem>
+                <SelectItem value="daThanhToan">Đã thanh toán</SelectItem>
+                <SelectItem value="quaHan">Quá hạn</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={toaNhaFilter} onValueChange={onToaNhaChange}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Tòa nhà" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả tòa nhà</SelectItem>
+                {toaNhaList.map((toaNha) => (
+                  <SelectItem key={toaNha._id} value={toaNha._id!}>
+                    {toaNha.tenToaNha}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           <Select value={monthFilter} onValueChange={onMonthChange}>
             <SelectTrigger className="w-full sm:w-[120px]">
               <SelectValue placeholder="Tháng" />

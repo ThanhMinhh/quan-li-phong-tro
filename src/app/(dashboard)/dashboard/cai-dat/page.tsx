@@ -180,7 +180,7 @@ export default function CaiDatPage() {
       </div>
 
       {/* Font Settings */}
-          <Card>
+          <Card className="hidden">
             <CardHeader className="p-4 md:p-6">
           <CardTitle className="flex items-center gap-2 text-base md:text-lg">
             <Type className="h-4 w-4 md:h-5 md:w-5" />
@@ -310,7 +310,7 @@ export default function CaiDatPage() {
           </Card>
 
       {/* UI Settings */}
-          <Card>
+          <Card className="hidden">
             <CardHeader className="p-4 md:p-6">
           <CardTitle className="flex items-center gap-2 text-base md:text-lg">
             <Monitor className="h-4 w-4 md:h-5 md:w-5" />

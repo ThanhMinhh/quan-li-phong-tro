@@ -67,6 +67,7 @@ export default function ThongBaoPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingThongBao, setEditingThongBao] = useState<ThongBao | null>(null);
+  const [viewingThongBao, setViewingThongBao] = useState<ThongBao | null>(null);
 
   useEffect(() => {
     document.title = 'Quản lý Thông báo';
@@ -93,25 +94,25 @@ export default function ThongBaoPage() {
       }
       
       // Fetch thông báo từ API
-      const thongBaoResponse = await fetch('/api/thong-bao');
+      const thongBaoResponse = await fetch('/api/thong-bao?limit=1000');
       const thongBaoData = thongBaoResponse.ok ? await thongBaoResponse.json() : { data: [] };
       const thongBaos = thongBaoData.success ? thongBaoData.data : [];
       setThongBaoList(thongBaos);
 
       // Fetch tòa nhà từ API
-      const toaNhaResponse = await fetch('/api/toa-nha');
+      const toaNhaResponse = await fetch('/api/toa-nha?limit=1000');
       const toaNhaData = toaNhaResponse.ok ? await toaNhaResponse.json() : { data: [] };
       const toaNhas = toaNhaData.success ? toaNhaData.data : [];
       setToaNhaList(toaNhas);
 
       // Fetch phòng từ API
-      const phongResponse = await fetch('/api/phong');
+      const phongResponse = await fetch('/api/phong?limit=1000');
       const phongData = phongResponse.ok ? await phongResponse.json() : { data: [] };
       const phongs = phongData.success ? phongData.data : [];
       setPhongList(phongs);
 
       // Fetch khách thuê từ API
-      const khachThueResponse = await fetch('/api/khach-thue');
+      const khachThueResponse = await fetch('/api/khach-thue?limit=1000');
       const khachThueData = khachThueResponse.ok ? await khachThueResponse.json() : { data: [] };
       const khachThues = khachThueData.success ? khachThueData.data : [];
       setKhachThueList(khachThues);
@@ -165,8 +166,9 @@ export default function ThongBaoPage() {
     }
   };
 
-  const getToaNhaName = (toaNhaId?: string) => {
+  const getToaNhaName = (toaNhaId?: string | any) => {
     if (!toaNhaId) return 'Tất cả tòa nhà';
+    if (typeof toaNhaId === 'object') return toaNhaId.tenToaNha || 'Không xác định';
     const toaNha = toaNhaList.find(tn => tn._id === toaNhaId);
     return toaNha?.tenToaNha || 'Không xác định';
   };
@@ -283,6 +285,31 @@ export default function ThongBaoPage() {
             />
           </DialogContent>
         </Dialog>
+        <Dialog open={!!viewingThongBao} onOpenChange={(open) => !open && setViewingThongBao(null)}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>{viewingThongBao?.tieuDe}</DialogTitle>
+              <DialogDescription>
+                {viewingThongBao?.ngayGui && new Date(viewingThongBao.ngayGui).toLocaleDateString('vi-VN')}
+                {' - '}
+                {viewingThongBao && getToaNhaName(viewingThongBao.toaNha)}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="mb-4">
+                <Badge variant="outline" className="mb-2">
+                  {viewingThongBao && getTypeBadge(viewingThongBao.loai).props.children}
+                </Badge>
+              </div>
+              <div className="text-sm whitespace-pre-wrap text-gray-700">
+                {viewingThongBao?.noiDung}
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setViewingThongBao(null)}>Đóng</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         </div>
       </div>
 
@@ -380,11 +407,8 @@ export default function ThongBaoPage() {
                 <TableRow>
                   <TableHead>Tiêu đề</TableHead>
                   <TableHead>Loại</TableHead>
-                  <TableHead>Người nhận</TableHead>
-                  <TableHead>Phòng</TableHead>
                   <TableHead>Tòa nhà</TableHead>
                   <TableHead>Ngày gửi</TableHead>
-                  <TableHead>Trạng thái</TableHead>
                   <TableHead className="text-right">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -401,16 +425,6 @@ export default function ThongBaoPage() {
                     </TableCell>
                     <TableCell>{getTypeBadge(thongBao.loai)}</TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        {getKhachThueNames(thongBao.nguoiNhan)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {getPhongNames(thongBao.phong || [])}
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-gray-400" />
                         <span className="text-sm">
@@ -426,22 +440,14 @@ export default function ThongBaoPage() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant={thongBao.daDoc.length > 0 ? "default" : "secondary"}>
-                        {thongBao.daDoc.length > 0 ? 'Đã đọc' : 'Chưa đọc'}
-                      </Badge>
-                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => handleSend(thongBao)}
+                          onClick={() => setViewingThongBao(thongBao)}
                         >
-                          <Send className="h-4 w-4" />
+                          <Eye className="h-4 w-4" />
                         </Button>
                         <Button 
                           variant="outline" 
@@ -534,23 +540,6 @@ export default function ThongBaoPage() {
                         <span>{getToaNhaName(thongBao.toaNha)}</span>
                       </div>
                     )}
-                    {thongBao.phong && thongBao.phong.length > 0 && (
-                      <div className="flex items-center gap-2 text-gray-500">
-                        <Home className="h-3 w-3" />
-                        <span className="truncate">{getPhongNames(thongBao.phong)}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2 text-gray-500">
-                      <Users className="h-3 w-3" />
-                      <span className="truncate">{getKhachThueNames(thongBao.nguoiNhan)}</span>
-                    </div>
-                  </div>
-
-                  {/* Read status */}
-                  <div className="border-t pt-2">
-                    <Badge variant={thongBao.daDoc.length > 0 ? "default" : "secondary"} className="text-xs">
-                      {thongBao.daDoc.length > 0 ? 'Đã đọc' : 'Chưa đọc'}
-                    </Badge>
                   </div>
 
                   {/* Action buttons */}
@@ -558,11 +547,11 @@ export default function ThongBaoPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleSend(thongBao)}
+                      onClick={() => setViewingThongBao(thongBao)}
                       className="flex-1"
                     >
-                      <Send className="h-3.5 w-3.5 mr-1" />
-                      Gửi
+                      <Eye className="h-3.5 w-3.5 mr-1" />
+                      Xem
                     </Button>
                     <Button
                       variant="outline"
@@ -732,46 +721,6 @@ function ThongBaoForm({
             ))}
           </SelectContent>
         </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs md:text-sm">Phòng (tùy chọn)</Label>
-        <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-2">
-          {phongList.map((phong) => (
-            <div key={phong._id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id={phong._id}
-                checked={formData.phong.includes(phong._id!)}
-                onChange={(e) => handlePhongChange(phong._id!, e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              <Label htmlFor={phong._id} className="text-xs cursor-pointer">
-                {phong.maPhong}
-              </Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label className="text-xs md:text-sm">Người nhận</Label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-32 overflow-y-auto border rounded-md p-2">
-          {khachThueList.map((khachThue) => (
-            <div key={khachThue._id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id={khachThue._id}
-                checked={formData.nguoiNhan.includes(khachThue._id!)}
-                onChange={(e) => handleNguoiNhanChange(khachThue._id!, e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              <Label htmlFor={khachThue._id} className="text-xs cursor-pointer truncate">
-                {khachThue.hoTen}
-              </Label>
-            </div>
-          ))}
-        </div>
       </div>
 
       <DialogFooter className="flex-col sm:flex-row gap-2">

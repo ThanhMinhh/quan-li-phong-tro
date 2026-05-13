@@ -19,6 +19,7 @@ const phongSchema = z.object({
   anhPhong: z.array(z.string()).optional(),
   tienNghi: z.array(z.string()).optional(),
   soNguoiToiDa: z.number().min(1, 'Số người tối đa phải lớn hơn 0').max(10, 'Số người tối đa không được quá 10'),
+  trangThai: z.enum(['trong', 'dangThue', 'baoTri']).optional(),
 });
 
 export async function GET(request: NextRequest) {
@@ -56,6 +57,29 @@ export async function GET(request: NextRequest) {
     
     if (trangThai) {
       query.trangThai = trangThai;
+    }
+
+    // Phân quyền dữ liệu
+    const userRole = session.user.role;
+    const userId = session.user.id;
+
+    if (userRole !== 'admin') {
+      if (userRole === 'chuNha' || !userRole) {
+        const ownedBuildings = await ToaNha.find({ chuSoHuu: userId }).select('_id');
+        const ownedBuildingIds = ownedBuildings.map(b => b._id);
+        
+        if (toaNha) {
+          // Nếu có lọc theo tòa nhà cụ thể, kiểm tra quyền sở hữu
+          if (!ownedBuildingIds.some(id => id.toString() === toaNha)) {
+            query.toaNha = { $in: [] }; // Không có quyền xem tòa nhà này
+          } else {
+            query.toaNha = toaNha;
+          }
+        } else {
+          // Mặc định chỉ xem phòng mình sở hữu
+          query.toaNha = { $in: ownedBuildingIds };
+        }
+      }
     }
 
     const phongList = await Phong.find(query)
@@ -150,7 +174,7 @@ export async function POST(request: NextRequest) {
       ...validatedData,
       anhPhong: validatedData.anhPhong || [],
       tienNghi: validatedData.tienNghi || [],
-      trangThai: 'trong', // Mặc định là trống, sẽ được cập nhật tự động
+      trangThai: validatedData.trangThai || 'trong',
     });
 
     await newPhong.save();

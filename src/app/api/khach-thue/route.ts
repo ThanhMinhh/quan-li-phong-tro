@@ -5,6 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import KhachThue from '@/models/KhachThue';
 import HopDong from '@/models/HopDong';
 import Phong from '@/models/Phong';
+import ToaNha from '@/models/ToaNha';
 import { updateKhachThueStatus } from '@/lib/status-utils';
 import { z } from 'zod';
 
@@ -16,10 +17,6 @@ const khachThueSchema = z.object({
   ngaySinh: z.string().min(1, 'Ngày sinh là bắt buộc'),
   gioiTinh: z.enum(['nam', 'nu', 'khac']),
   queQuan: z.string().min(1, 'Quê quán là bắt buộc'),
-  anhCCCD: z.object({
-    matTruoc: z.string().optional(),
-    matSau: z.string().optional(),
-  }).optional(),
   ngheNghiep: z.string().optional(),
   matKhau: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự').optional(),
 });
@@ -57,6 +54,43 @@ export async function GET(request: NextRequest) {
     
     if (trangThai) {
       query.trangThai = trangThai;
+    }
+
+    // Phân quyền dữ liệu
+    const userRole = session.user.role;
+    const userId = session.user.id;
+
+    if (userRole !== 'admin') {
+      // 1. Lấy danh sách tòa nhà thuộc sở hữu (đối với chuNha)
+      let ownedBuildingIds: any[] = [];
+      if (userRole === 'chuNha' || !userRole) {
+        const ownedBuildings = await ToaNha.find({ chuSoHuu: userId }).select('_id');
+        ownedBuildingIds = ownedBuildings.map(b => b._id);
+      } else {
+        // nhanVien tạm thời thấy tất cả
+        const allBuildings = await ToaNha.find().select('_id');
+        ownedBuildingIds = allBuildings.map(b => b._id);
+      }
+
+      // 2. Lấy danh sách phòng thuộc các tòa nhà đó
+      const rooms = await Phong.find({ toaNha: { $in: ownedBuildingIds } }).select('_id');
+      const roomIds = rooms.map(r => r._id);
+
+      // 3. Lấy danh sách hợp đồng cho các phòng đó
+      const contracts = await HopDong.find({ phong: { $in: roomIds } }).select('khachThueId');
+      
+      // 4. Trích xuất tất cả ID khách thuê từ các hợp đồng đó
+      const tenantIdsSet = new Set<string>();
+      contracts.forEach(contract => {
+        if (Array.isArray(contract.khachThueId)) {
+          contract.khachThueId.forEach(id => tenantIdsSet.add(id.toString()));
+        } else if (contract.khachThueId) {
+          tenantIdsSet.add(contract.khachThueId.toString());
+        }
+      });
+      
+      const tenantIds = Array.from(tenantIdsSet);
+      query._id = { $in: tenantIds };
     }
 
     const khachThueList = await KhachThue.find(query)
@@ -99,12 +133,12 @@ export async function GET(request: NextRequest) {
           }
         });
         
+        const hasPass = !!khachThue.matKhau;
         const khachThueObj = khachThue.toObject();
-        // Chuyển matKhau thành boolean để frontend biết đã có mật khẩu hay chưa
-        // Không trả về giá trị thực của mật khẩu (đã hash)
+        
         return {
           ...khachThueObj,
-          matKhau: !!khachThueObj.matKhau ? '******' : undefined,
+          matKhau: hasPass ? '******' : undefined,
           hopDongHienTai: hopDong
         };
       })
@@ -166,7 +200,6 @@ export async function POST(request: NextRequest) {
     const newKhachThue = new KhachThue({
       ...validatedData,
       ngaySinh: new Date(validatedData.ngaySinh),
-      anhCCCD: validatedData.anhCCCD || { matTruoc: '', matSau: '' },
       trangThai: 'chuaThue', // Mặc định là chưa thuê, sẽ được cập nhật tự động
     });
 

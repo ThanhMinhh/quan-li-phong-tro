@@ -22,10 +22,25 @@ import {
   Droplets,
   Wrench,
   Calculator,
-  RefreshCw
+  RefreshCw,
+  Check,
+  ChevronsUpDown
 } from 'lucide-react';
 import { HopDong, Phong, KhachThue } from '@/types';
 import { toast } from 'sonner';
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 // Helper functions
 const getPhongName = (phongId: string | Phong, phongList: Phong[]) => {
@@ -80,7 +95,7 @@ export default function ThemMoiHoaDonPage() {
     tongTien: 0,
     daThanhToan: 0,
     conLai: 0,
-    trangThai: 'chuaThanhToan' as 'chuaThanhToan' | 'daThanhToanMotPhan' | 'daThanhToan' | 'quaHan',
+    trangThai: 'chuaThanhToan' as 'chuaThanhToan' | 'daThanhToan' | 'quaHan',
     hanThanhToan: '',
     ghiChu: '',
   });
@@ -97,6 +112,7 @@ export default function ThemMoiHoaDonPage() {
   };
 
   const [newPhiDichVu, setNewPhiDichVu] = useState({ ten: '', gia: 0 });
+  const [openHopDong, setOpenHopDong] = useState(false);
   const [readingSource, setReadingSource] = useState<{
     chiSoDienBanDau: number;
     chiSoNuocBanDau: number;
@@ -188,16 +204,16 @@ export default function ThemMoiHoaDonPage() {
     const giaDien = selectedHopDong?.giaDien || 0;
     const giaNuoc = selectedHopDong?.giaNuoc || 0;
     
-    const tienDienTinh = soDien * giaDien;
-    const tienNuocTinh = soNuoc * giaNuoc;
+    const tienDienTinh = Math.max(0, soDien) * giaDien;
+    const tienNuocTinh = Math.max(0, soNuoc) * giaNuoc;
     
     const total = formData.tienPhong + tienDienTinh + tienNuocTinh + totalPhiDichVu;
     const conLai = total - formData.daThanhToan;
     
     setFormData(prev => ({
       ...prev,
-      soDien: Math.max(0, soDien),
-      soNuoc: Math.max(0, soNuoc),
+      soDien: soDien,
+      soNuoc: soNuoc,
       tienDien: tienDienTinh,
       tienNuoc: tienNuocTinh,
       tongTien: total,
@@ -388,69 +404,108 @@ export default function ThemMoiHoaDonPage() {
                     <div className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded mb-1">
                       {hopDongList.filter(hd => hd.trangThai === 'hoatDong').length} hợp đồng hoạt động
                     </div>
-                    <Select value={formData.hopDong} onValueChange={(value) => setFormData(prev => ({ ...prev, hopDong: value }))}>
-                      <SelectTrigger className="h-10 text-sm">
-                        <SelectValue placeholder="Chọn hợp đồng" />
-                      </SelectTrigger>
-                      <SelectContent className="max-w-[500px]">
-                        {hopDongList.length === 0 ? (
-                          <div className="p-2 text-sm text-gray-500">Đang tải hợp đồng...</div>
-                        ) : (
-                          hopDongList
-                            .filter(hd => hd.trangThai === 'hoatDong')
-                            .map((hopDong) => {
-                              const phongObj = typeof hopDong.phong === 'object' ? (hopDong.phong as Phong) : null;
-                              const phongName = phongObj?.maPhong || getPhongName(hopDong.phong as string, phongList);
-                              const toaNhaName = phongObj?.toaNha && typeof phongObj.toaNha === 'object' 
-                                ? (phongObj.toaNha as any).tenToaNha 
-                                : 'N/A';
-                              const nguoiDaiDienName = getKhachThueName(hopDong.nguoiDaiDien, khachThueList);
-                              
-                              // Xử lý ngày tháng an toàn
-                              const formatDate = (date: any) => {
-                                try {
-                                  if (!date) return 'N/A';
-                                  const dateObj = new Date(date);
-                                  if (isNaN(dateObj.getTime())) return 'N/A';
-                                  return dateObj.toLocaleDateString('vi-VN');
-                                } catch (error) {
-                                  return 'N/A';
-                                }
-                              };
-                              
-                              const ngayBatDau = formatDate(hopDong.ngayBatDau);
-                              const ngayKetThuc = formatDate(hopDong.ngayKetThuc);
-                              
-                              return (
-                                <SelectItem 
-                                  key={hopDong._id} 
-                                  value={hopDong._id!}
-                                  className="cursor-pointer"
-                                >
-                                  <div className="flex flex-col gap-1 py-1">
-                                    <div className="flex items-center gap-2">
-                                      <span className="font-semibold text-blue-700">{hopDong.maHopDong}</span>
-                                      <span className="text-gray-400">•</span>
-                                      <span className="text-sm font-medium text-gray-700">Phòng {phongName}</span>
-                                      {toaNhaName !== 'N/A' && (
-                                        <>
-                                          <span className="text-gray-400">•</span>
-                                          <span className="text-sm text-gray-600">{toaNhaName}</span>
-                                        </>
-                                      )}
-                                    </div>
-                                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                                      <span>👤 {nguoiDaiDienName}</span>
-                                      <span className="text-gray-400">•</span>
-                                      <span>📅 {ngayBatDau !== 'N/A' && ngayKetThuc !== 'N/A' ? `${ngayBatDau} → ${ngayKetThuc}` : 'Chưa có thông tin ngày'}</span>
-                                    </div>
-                                  </div>
-                                </SelectItem>
-                              );
-                            })
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <Popover open={openHopDong} onOpenChange={setOpenHopDong}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openHopDong}
+                          className="w-full justify-between h-10 text-sm font-normal bg-background"
+                        >
+                          {formData.hopDong
+                            ? (function() {
+                                const hd = hopDongList.find(h => h._id === formData.hopDong);
+                                if (!hd) return "Chọn hợp đồng";
+                                const phongObj = typeof hd.phong === 'object' ? (hd.phong as Phong) : null;
+                                const phongName = phongObj?.maPhong || getPhongName(hd.phong as string, phongList);
+                                return `${hd.maHopDong} - Phòng ${phongName}`;
+                              })()
+                            : "Chọn hợp đồng..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[90vw] md:w-[500px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Tìm kiếm mã hợp đồng, phòng, người thuê..." className="text-sm" />
+                          <CommandEmpty className="text-sm py-3 text-center text-muted-foreground">Không tìm thấy hợp đồng phù hợp.</CommandEmpty>
+                          <CommandGroup className="max-h-[300px] overflow-auto">
+                            {hopDongList.length === 0 ? (
+                              <div className="p-2 text-sm text-center text-gray-500">Đang tải hợp đồng...</div>
+                            ) : (
+                              hopDongList
+                                .filter(hd => hd.trangThai === 'hoatDong')
+                                .map((hopDong) => {
+                                  const phongObj = typeof hopDong.phong === 'object' ? (hopDong.phong as Phong) : null;
+                                  const phongName = phongObj?.maPhong || getPhongName(hopDong.phong as string, phongList);
+                                  const toaNhaName = phongObj?.toaNha && typeof phongObj.toaNha === 'object' 
+                                    ? (phongObj.toaNha as any).tenToaNha 
+                                    : 'N/A';
+                                  const nguoiDaiDienName = getKhachThueName(hopDong.nguoiDaiDien, khachThueList);
+                                  
+                                  // Xử lý ngày tháng an toàn
+                                  const formatDate = (date: any) => {
+                                    try {
+                                      if (!date) return 'N/A';
+                                      const dateObj = new Date(date);
+                                      if (isNaN(dateObj.getTime())) return 'N/A';
+                                      return dateObj.toLocaleDateString('vi-VN');
+                                    } catch (error) {
+                                      return 'N/A';
+                                    }
+                                  };
+                                  
+                                  const ngayBatDau = formatDate(hopDong.ngayBatDau);
+                                  const ngayKetThuc = formatDate(hopDong.ngayKetThuc);
+                                  
+                                  // Chuỗi tìm kiếm gom nhóm các thông tin
+                                  const searchString = `${hopDong.maHopDong} ${phongName} ${toaNhaName} ${nguoiDaiDienName}`;
+                                  
+                                  return (
+                                    <CommandItem
+                                      key={hopDong._id}
+                                      value={searchString}
+                                      onSelect={() => {
+                                        setFormData(prev => ({ ...prev, hopDong: hopDong._id! }));
+                                        setOpenHopDong(false);
+                                      }}
+                                      className="cursor-pointer border-b last:border-0 py-2"
+                                    >
+                                      <div className="flex items-start w-full gap-2">
+                                        <div className="mt-1 flex-shrink-0">
+                                          <Check
+                                            className={cn(
+                                              "h-4 w-4 text-blue-600",
+                                              formData.hopDong === hopDong._id ? "opacity-100" : "opacity-0"
+                                            )}
+                                          />
+                                        </div>
+                                        <div className="flex flex-col gap-1 w-full">
+                                          <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="font-semibold text-blue-700">{hopDong.maHopDong}</span>
+                                            <span className="text-gray-400">•</span>
+                                            <span className="text-sm font-medium text-gray-700">Phòng {phongName}</span>
+                                            {toaNhaName !== 'N/A' && (
+                                              <>
+                                                <span className="text-gray-400">•</span>
+                                                <span className="text-xs text-gray-600">{toaNhaName}</span>
+                                              </>
+                                            )}
+                                          </div>
+                                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                                            <span className="truncate max-w-[150px]">👤 {nguoiDaiDienName}</span>
+                                            <span className="text-gray-400">•</span>
+                                            <span>📅 {ngayBatDau !== 'N/A' && ngayKetThuc !== 'N/A' ? `${ngayBatDau} → ${ngayKetThuc}` : 'Chưa có thông tin ngày'}</span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </CommandItem>
+                                  );
+                                })
+                            )}
+                          </CommandGroup>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
 
@@ -517,7 +572,7 @@ export default function ThemMoiHoaDonPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <Label htmlFor="tienPhong" className="text-sm">Tiền phòng (VNĐ)</Label>
                     <Input
@@ -526,19 +581,6 @@ export default function ThemMoiHoaDonPage() {
                       min="0"
                       value={formData.tienPhong}
                       onChange={(e) => setFormData(prev => ({ ...prev, tienPhong: parseInt(e.target.value) || 0 }))}
-                      required
-                      className="h-10"
-                    />
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <Label htmlFor="daThanhToan" className="text-sm">Đã thanh toán (VNĐ)</Label>
-                    <Input
-                      id="daThanhToan"
-                      type="number"
-                      min="0"
-                      value={formData.daThanhToan}
-                      onChange={(e) => setFormData(prev => ({ ...prev, daThanhToan: parseInt(e.target.value) || 0 }))}
                       required
                       className="h-10"
                     />
@@ -587,15 +629,10 @@ export default function ThemMoiHoaDonPage() {
                             value={formData.chiSoDienBanDau}
                             onChange={(e) => {
                               const value = Math.max(0, parseInt(e.target.value) || 0);
-                              setFormData(prev => {
-                                // Nếu chỉ số ban đầu > chỉ số cuối kỳ, cập nhật chỉ số cuối kỳ
-                                const newChiSoCuoiKy = Math.max(prev.chiSoDienCuoiKy, value);
-                                return { 
-                                  ...prev, 
-                                  chiSoDienBanDau: value,
-                                  chiSoDienCuoiKy: newChiSoCuoiKy
-                                };
-                              });
+                              setFormData(prev => ({
+                                ...prev, 
+                                chiSoDienBanDau: value
+                              }));
                             }}
                             className="h-8 w-20 text-center"
                             placeholder="0"
@@ -609,9 +646,7 @@ export default function ThemMoiHoaDonPage() {
                             value={formData.chiSoDienCuoiKy}
                             onChange={(e) => {
                               const value = Math.max(0, parseInt(e.target.value) || 0);
-                              // Đảm bảo chỉ số cuối >= chỉ số đầu
-                              const finalValue = Math.max(value, formData.chiSoDienBanDau);
-                              setFormData(prev => ({ ...prev, chiSoDienCuoiKy: finalValue }));
+                              setFormData(prev => ({ ...prev, chiSoDienCuoiKy: value }));
                             }}
                             className="h-8 w-20 text-center"
                             placeholder="0"
@@ -667,15 +702,10 @@ export default function ThemMoiHoaDonPage() {
                             value={formData.chiSoNuocBanDau}
                             onChange={(e) => {
                               const value = Math.max(0, parseInt(e.target.value) || 0);
-                              setFormData(prev => {
-                                // Nếu chỉ số ban đầu > chỉ số cuối kỳ, cập nhật chỉ số cuối kỳ
-                                const newChiSoCuoiKy = Math.max(prev.chiSoNuocCuoiKy, value);
-                                return { 
-                                  ...prev, 
-                                  chiSoNuocBanDau: value,
-                                  chiSoNuocCuoiKy: newChiSoCuoiKy
-                                };
-                              });
+                              setFormData(prev => ({
+                                ...prev, 
+                                chiSoNuocBanDau: value
+                              }));
                             }}
                             className="h-8 w-20 text-center"
                             placeholder="0"
@@ -689,9 +719,7 @@ export default function ThemMoiHoaDonPage() {
                             value={formData.chiSoNuocCuoiKy}
                             onChange={(e) => {
                               const value = Math.max(0, parseInt(e.target.value) || 0);
-                              // Đảm bảo chỉ số cuối >= chỉ số đầu
-                              const finalValue = Math.max(value, formData.chiSoNuocBanDau);
-                              setFormData(prev => ({ ...prev, chiSoNuocCuoiKy: finalValue }));
+                              setFormData(prev => ({ ...prev, chiSoNuocCuoiKy: value }));
                             }}
                             className="h-8 w-20 text-center"
                             placeholder="0"
@@ -824,13 +852,12 @@ export default function ThemMoiHoaDonPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="trangThai" className="text-sm">Trạng thái</Label>
-                    <Select value={formData.trangThai} onValueChange={(value) => setFormData(prev => ({ ...prev, trangThai: value as 'chuaThanhToan' | 'daThanhToanMotPhan' | 'daThanhToan' | 'quaHan' }))}>
+                    <Select value={formData.trangThai} onValueChange={(value) => setFormData(prev => ({ ...prev, trangThai: value as 'chuaThanhToan' | 'daThanhToan' | 'quaHan' }))}>
                       <SelectTrigger className="h-10 text-sm">
                         <SelectValue placeholder="Chọn trạng thái" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="chuaThanhToan">Chưa thanh toán</SelectItem>
-                        <SelectItem value="daThanhToanMotPhan">Thanh toán một phần</SelectItem>
                         <SelectItem value="daThanhToan">Đã thanh toán</SelectItem>
                         <SelectItem value="quaHan">Quá hạn</SelectItem>
                       </SelectContent>

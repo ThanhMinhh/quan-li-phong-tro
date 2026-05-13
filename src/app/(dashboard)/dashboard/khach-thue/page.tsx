@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useSession } from 'next-auth/react';
 import { useCache } from '@/hooks/use-cache';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,11 +39,11 @@ import {
   Info,
   CreditCard,
   RefreshCw,
-  Copy
+  Copy,
+  Shield
 } from 'lucide-react';
 import { KhachThue } from '@/types';
 import { KhachThueDataTable } from './table';
-import { CCCDUpload } from '@/components/ui/cccd-upload';
 import { DeleteConfirmPopover } from '@/components/ui/delete-confirm-popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -58,13 +59,31 @@ export default function KhachThuePage() {
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  const { data: session } = useSession();
+  const isStaff = session?.user?.role === 'nhanVien';
+
   useEffect(() => {
     document.title = 'Quản lý Khách thuê';
   }, []);
 
   useEffect(() => {
-    fetchKhachThue();
-  }, []);
+    if (session?.user && !isStaff) {
+      fetchKhachThue();
+    }
+  }, [session, isStaff]);
+
+  if (isStaff) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Shield className="h-16 w-16 text-rose-500 opacity-20" />
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900">Truy cập bị từ chối</h2>
+          <p className="text-gray-500">Bạn không có quyền xem thông tin khách thuê.</p>
+        </div>
+        <Button onClick={() => window.location.href = '/dashboard'}>Quay lại trang chủ</Button>
+      </div>
+    );
+  }
 
   const fetchKhachThue = async (forceRefresh = false) => {
     try {
@@ -493,10 +512,7 @@ function KhachThueForm({
     ngaySinh: khachThue?.ngaySinh ? new Date(khachThue.ngaySinh).toISOString().split('T')[0] : '',
     gioiTinh: khachThue?.gioiTinh || 'nam',
     queQuan: khachThue?.queQuan || '',
-    anhCCCD: {
-      matTruoc: khachThue?.anhCCCD.matTruoc || '',
-      matSau: khachThue?.anhCCCD.matSau || '',
-    },
+
     ngheNghiep: khachThue?.ngheNghiep || '',
     matKhau: '',
   });
@@ -547,21 +563,6 @@ function KhachThueForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-      <Tabs defaultValue="thong-tin" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="thong-tin" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <Info className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">Thông tin</span>
-            <span className="sm:hidden">Thông tin</span>
-          </TabsTrigger>
-          <TabsTrigger value="anh-cccd" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <CreditCard className="h-3 w-3 md:h-4 md:w-4" />
-            <span className="hidden sm:inline">Ảnh CCCD</span>
-            <span className="sm:hidden">CCCD</span>
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="thong-tin" className="space-y-4 md:space-y-6 mt-4 md:mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
             <div className="space-y-2">
               <Label htmlFor="hoTen" className="text-xs md:text-sm">Họ tên</Label>
@@ -676,16 +677,7 @@ function KhachThueForm({
               }
             </p>
           </div>
-        </TabsContent>
-        
-        <TabsContent value="anh-cccd" className="space-y-4 md:space-y-6 mt-4 md:mt-6">
-          <CCCDUpload
-            anhCCCD={formData.anhCCCD}
-            onCCCDChange={(anhCCCD) => setFormData(prev => ({ ...prev, anhCCCD }))}
-            className="w-full"
-          />
-        </TabsContent>
-      </Tabs>
+
 
       <DialogFooter className="flex-col sm:flex-row gap-2">
         <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto">

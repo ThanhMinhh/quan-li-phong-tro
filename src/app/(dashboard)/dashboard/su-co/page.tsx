@@ -99,25 +99,25 @@ export default function SuCoPage() {
       }
       
       // Fetch sự cố từ API
-      const suCoResponse = await fetch('/api/su-co');
+      const suCoResponse = await fetch('/api/su-co?limit=1000');
       const suCoData = await suCoResponse.json();
       const suCos = suCoData.success ? suCoData.data : [];
       setSuCoList(suCos);
 
       // Fetch phòng từ API
-      const phongResponse = await fetch('/api/phong');
+      const phongResponse = await fetch('/api/phong?limit=1000');
       const phongData = await phongResponse.json();
       const phongs = phongData.success ? phongData.data : [];
       setPhongList(phongs);
 
       // Fetch khách thuê từ API
-      const khachThueResponse = await fetch('/api/khach-thue');
+      const khachThueResponse = await fetch('/api/khach-thue?limit=1000');
       const khachThueData = await khachThueResponse.json();
       const khachThues = khachThueData.success ? khachThueData.data : [];
       setKhachThueList(khachThues);
 
       // Fetch hợp đồng từ API
-      const hopDongResponse = await fetch('/api/hop-dong');
+      const hopDongResponse = await fetch('/api/hop-dong?limit=1000');
       const hopDongData = await hopDongResponse.json();
       const hopDongs = hopDongData.success ? hopDongData.data : [];
       setHopDongList(hopDongs);
@@ -662,9 +662,10 @@ function SuCoForm({
     
     if (phong) {
       // Tìm hợp đồng đang hoạt động cho phòng này
-      const hopDongHoatDong = hopDongList.find(hd => 
-        hd.phong._id === phongId && hd.trangThai === 'hoatDong'
-      );
+      const hopDongHoatDong = hopDongList.find(hd => {
+        const hdPhongId = typeof hd.phong === 'object' ? hd.phong._id : hd.phong;
+        return hdPhongId === phongId && hd.trangThai === 'hoatDong';
+      });
       
       if (hopDongHoatDong && hopDongHoatDong.nguoiDaiDien) {
         // Lấy người đại diện làm khách thuê chính
@@ -808,13 +809,7 @@ function SuCoForm({
         </div>
       )}
 
-      <SuCoImageUpload
-        images={images}
-        onImagesChange={setImages}
-        maxImages={5}
-      />
-
-      <DialogFooter className="flex-col sm:flex-row gap-2">
+      <DialogFooter className="flex-col sm:flex-row gap-2 mt-4">
         <Button type="button" variant="outline" size="sm" onClick={onClose} className="w-full sm:w-auto">
           Hủy
         </Button>

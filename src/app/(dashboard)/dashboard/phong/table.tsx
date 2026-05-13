@@ -112,13 +112,7 @@ const getStatusBadge = (status: string) => {
           Đang thuê
         </Badge>
       )
-    case 'daDat':
-      return (
-        <Badge variant="outline" className="gap-1 border-orange-600 text-orange-600">
-          <AlertCircle className="h-3 w-3" />
-          Đã đặt
-        </Badge>
-      )
+
     case 'baoTri':
       return (
         <Badge variant="destructive" className="gap-1">
@@ -156,7 +150,6 @@ type PhongTableProps = {
   onView?: (phong: Phong) => void
   onEdit: (phong: Phong) => void
   onDelete: (id: string) => void
-  onViewImages?: (phong: Phong) => void
   onViewTenants?: (phong: Phong) => void
 }
 
@@ -314,29 +307,7 @@ const createColumns = (props: PhongTableProps): ColumnDef<Phong>[] => [
       );
     },
   },
-  {
-    accessorKey: "anhPhong",
-    header: "Ảnh",
-    cell: ({ row }) => {
-      const imageCount = row.original.anhPhong?.length || 0
-      return (
-        <div>
-          {imageCount > 0 ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => props.onViewImages?.(row.original)}
-            >
-              <ImageIcon className="h-4 w-4 mr-1" />
-              {imageCount}
-            </Button>
-          ) : (
-            <span className="text-muted-foreground text-sm">-</span>
-          )}
-        </div>
-      )
-    },
-  },
+
   {
     id: "actions",
     cell: ({ row }) => (
@@ -358,12 +329,7 @@ const createColumns = (props: PhongTableProps): ColumnDef<Phong>[] => [
               Xem chi tiết
             </DropdownMenuItem>
           )}
-          {row.original.anhPhong && row.original.anhPhong.length > 0 && (
-            <DropdownMenuItem onClick={() => props.onViewImages?.(row.original)}>
-              <ImageIcon className="mr-2 h-4 w-4" />
-              Xem ảnh ({row.original.anhPhong.length})
-            </DropdownMenuItem>
-          )}
+
           <DropdownMenuItem onClick={() => props.onEdit(row.original)}>
             <Edit className="mr-2 h-4 w-4" />
             Chỉnh sửa
@@ -527,7 +493,6 @@ export function PhongDataTable(props: PhongDataTableProps) {
             <SelectContent>
               <SelectItem value="all">Tất cả</SelectItem>
               <SelectItem value="trong">Trống</SelectItem>
-              <SelectItem value="daDat">Đã đặt</SelectItem>
               <SelectItem value="dangThue">Đang thuê</SelectItem>
               <SelectItem value="baoTri">Bảo trì</SelectItem>
             </SelectContent>

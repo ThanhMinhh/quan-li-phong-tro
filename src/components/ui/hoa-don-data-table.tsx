@@ -60,11 +60,9 @@ const formatCurrency = (amount: number) => {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'chuaThanhToan':
-      return <Badge variant="destructive">Chưa thanh toán</Badge>;
-    case 'daThanhToanMotPhan':
-      return <Badge variant="secondary">Thanh toán một phần</Badge>;
+      return <Badge variant="destructive" className="bg-red-100 text-red-800 hover:bg-red-200 border-red-200">Chưa thanh toán</Badge>;
     case 'daThanhToan':
-      return <Badge variant="default">Đã thanh toán</Badge>;
+      return <Badge variant="default" className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 border-emerald-200">Đã thanh toán</Badge>;
     case 'quaHan':
       return <Badge variant="outline">Quá hạn</Badge>;
     default:

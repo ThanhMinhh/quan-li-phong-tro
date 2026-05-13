@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { useSession } from 'next-auth/react';
 import { useCache } from '@/hooks/use-cache';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,12 +25,12 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Home, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Home,
   MapPin,
   Users,
   Eye,
@@ -37,7 +38,8 @@ import {
   Copy,
   Info,
   Image,
-  RefreshCw
+  RefreshCw,
+  Shield
 } from 'lucide-react';
 import {
   Carousel,
@@ -48,7 +50,6 @@ import {
 } from '@/components/ui/carousel';
 import { Phong, ToaNha } from '@/types';
 import { PhongDataTable } from './table';
-import { PhongImageUpload } from '@/components/ui/phong-image-upload';
 import { DeleteConfirmPopover } from '@/components/ui/delete-confirm-popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
@@ -58,7 +59,7 @@ export default function PhongPage() {
     phongList: Phong[];
     toaNhaList: ToaNha[];
   }>({ key: 'phong-data', duration: 300000 }); // 5 phút
-  
+
   const [phongList, setPhongList] = useState<Phong[]>([]);
   const [toaNhaList, setToaNhaList] = useState<ToaNha[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,26 +68,41 @@ export default function PhongPage() {
   const [selectedTrangThai, setSelectedTrangThai] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPhong, setEditingPhong] = useState<Phong | null>(null);
-  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
-  const [viewingImages, setViewingImages] = useState<string[]>([]);
-  const [viewingPhongName, setViewingPhongName] = useState('');
   const [isTenantsViewerOpen, setIsTenantsViewerOpen] = useState(false);
   const [viewingTenants, setViewingTenants] = useState<any[]>([]);
   const [viewingTenantsPhongName, setViewingTenantsPhongName] = useState('');
+
+  const { data: session } = useSession();
+  const isStaff = session?.user?.role === 'nhanVien';
 
   useEffect(() => {
     document.title = 'Quản lý Phòng';
   }, []);
 
   useEffect(() => {
-    fetchPhong();
-    fetchToaNha();
-  }, []);
+    if (session?.user && !isStaff) {
+      fetchPhong();
+      fetchToaNha();
+    }
+  }, [session, isStaff]);
+
+  if (isStaff) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Shield className="h-16 w-16 text-rose-500 opacity-20" />
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900">Truy cập bị từ chối</h2>
+          <p className="text-gray-500">Bạn không có quyền xem thông tin phòng.</p>
+        </div>
+        <Button onClick={() => window.location.href = '/dashboard'}>Quay lại trang chủ</Button>
+      </div>
+    );
+  }
 
   const fetchPhong = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      
+
       // Thử load từ cache trước (nếu không force refresh)
       if (!forceRefresh) {
         const cachedData = cache.getCache();
@@ -97,11 +113,11 @@ export default function PhongPage() {
           return;
         }
       }
-      
+
       const params = new URLSearchParams();
       if (selectedToaNha && selectedToaNha !== 'all') params.append('toaNha', selectedToaNha);
       if (selectedTrangThai && selectedTrangThai !== 'all') params.append('trangThai', selectedTrangThai);
-      
+
       // Fetch phong
       const response = await fetch(`/api/phong?${params.toString()}&limit=100`);
       let phongData: Phong[] = [];
@@ -112,7 +128,7 @@ export default function PhongPage() {
           setPhongList(phongData);
         }
       }
-      
+
       // Fetch toa nha
       const toaNhaResponse = await fetch('/api/toa-nha');
       let toaNhaData: ToaNha[] = [];
@@ -123,7 +139,7 @@ export default function PhongPage() {
           setToaNhaList(toaNhaData);
         }
       }
-      
+
       // Lưu cache với data mới
       if (phongData.length > 0 || toaNhaData.length > 0) {
         cache.setCache({
@@ -181,7 +197,7 @@ export default function PhongPage() {
       const response = await fetch(`/api/phong/${id}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -201,20 +217,12 @@ export default function PhongPage() {
     }
   };
 
-  const handleViewImages = (phong: Phong) => {
-    if (phong.anhPhong && phong.anhPhong.length > 0) {
-      setViewingImages(phong.anhPhong);
-      setViewingPhongName(phong.maPhong);
-      setIsImageViewerOpen(true);
-    } else {
-      toast.info('Phòng này chưa có ảnh nào');
-    }
-  };
+
 
   const handleViewTenants = (phong: Phong) => {
     const phongData = phong as any;
     const hopDong = phongData.hopDongHienTai;
-    
+
     if (hopDong && hopDong.khachThueId && hopDong.khachThueId.length > 0) {
       setViewingTenants(hopDong.khachThueId);
       setViewingTenantsPhongName(phong.maPhong);
@@ -246,7 +254,7 @@ export default function PhongPage() {
           <p className="text-xs md:text-sm text-gray-600">Danh sách tất cả phòng trong hệ thống</p>
         </div>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
-          <Button 
+          <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
@@ -255,7 +263,7 @@ export default function PhongPage() {
             <RefreshCw className={`h-4 w-4 mr-2 ${cache.isRefreshing ? 'animate-spin' : ''}`} />
             {cache.isRefreshing ? 'Đang tải...' : 'Tải mới'}
           </Button>
-     
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm" onClick={() => setEditingPhong(null)} className="w-full sm:w-auto">
@@ -272,8 +280,8 @@ export default function PhongPage() {
                   {editingPhong ? 'Cập nhật thông tin phòng' : 'Nhập thông tin phòng mới'}
                 </DialogDescription>
               </DialogHeader>
-              
-              <PhongForm 
+
+              <PhongForm
                 phong={editingPhong}
                 toaNhaList={toaNhaList}
                 onClose={() => setIsDialogOpen(false)}
@@ -347,12 +355,11 @@ export default function PhongPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6">
-          <PhongDataTable 
+          <PhongDataTable
             data={filteredPhong}
             toaNhaList={toaNhaList}
             onEdit={handleEdit}
             onDelete={handleDelete}
-            onViewImages={handleViewImages}
             onViewTenants={handleViewTenants}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
@@ -404,14 +411,13 @@ export default function PhongPage() {
               <SelectContent>
                 <SelectItem value="all" className="text-sm">Tất cả</SelectItem>
                 <SelectItem value="trong" className="text-sm">Trống</SelectItem>
-                <SelectItem value="daDat" className="text-sm">Đã đặt</SelectItem>
                 <SelectItem value="dangThue" className="text-sm">Đang thuê</SelectItem>
                 <SelectItem value="baoTri" className="text-sm">Bảo trì</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
-        
+
         {filteredPhong.length === 0 ? (
           <Card className="p-6 text-center">
             <Home className="h-10 w-10 mx-auto text-gray-400 mb-3" />
@@ -424,7 +430,6 @@ export default function PhongPage() {
               const getTrangThaiColor = (trangThai: string) => {
                 switch (trangThai) {
                   case 'trong': return 'bg-green-100 text-green-800';
-                  case 'daDat': return 'bg-yellow-100 text-yellow-800';
                   case 'dangThue': return 'bg-blue-100 text-blue-800';
                   case 'baoTri': return 'bg-red-100 text-red-800';
                   default: return 'bg-gray-100 text-gray-800';
@@ -434,7 +439,6 @@ export default function PhongPage() {
               const getTrangThaiText = (trangThai: string) => {
                 switch (trangThai) {
                   case 'trong': return 'Trống';
-                  case 'daDat': return 'Đã đặt';
                   case 'dangThue': return 'Đang thuê';
                   case 'baoTri': return 'Bảo trì';
                   default: return trangThai;
@@ -453,7 +457,7 @@ export default function PhongPage() {
                         {getTrangThaiText(phong.trangThai)}
                       </Badge>
                     </div>
-                    
+
                     <div className="space-y-1.5 mb-3">
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Giá thuê:</span>
@@ -479,11 +483,11 @@ export default function PhongPage() {
                     {(() => {
                       const phongData = phong as any;
                       const hopDong = phongData.hopDongHienTai;
-                      
+
                       if (hopDong && hopDong.khachThueId && hopDong.khachThueId.length > 0) {
                         const nguoiDaiDien = hopDong.nguoiDaiDien;
                         const soLuongKhachThue = hopDong.khachThueId.length;
-                        
+
                         return (
                           <div className="mb-3 p-2 bg-blue-50 rounded-md border border-blue-200">
                             <div className="flex items-center gap-1.5 mb-1">
@@ -514,35 +518,8 @@ export default function PhongPage() {
                       return null;
                     })()}
 
-                    {phong.anhPhong && phong.anhPhong.length > 0 && (
-                      <div className="mb-3">
-                        <img 
-                          src={phong.anhPhong[0]} 
-                          alt={phong.maPhong}
-                          className="w-full h-32 object-cover rounded-md"
-                          onClick={() => handleViewImages(phong)}
-                        />
-                        {phong.anhPhong.length > 1 && (
-                          <div className="text-xs text-gray-600 mt-1">
-                            +{phong.anhPhong.length - 1} ảnh khác
-                          </div>
-                        )}
-                      </div>
-                    )}
-
                     <div className="space-y-2">
                       <div className="flex gap-2">
-                        {phong.anhPhong && phong.anhPhong.length > 0 && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewImages(phong)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            title="Xem ảnh phòng"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
                         <Button
                           variant="outline"
                           size="sm"
@@ -581,49 +558,7 @@ export default function PhongPage() {
         )}
       </div>
 
-      {/* Image Viewer Dialog */}
-      <Dialog open={isImageViewerOpen} onOpenChange={setIsImageViewerOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden w-[95vw] md:w-full">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base md:text-lg">
-              <Image className="h-4 w-4 md:h-5 md:w-5" />
-              Ảnh phòng {viewingPhongName}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="flex-1 overflow-hidden">
-            {viewingImages.length > 0 && (
-              <Carousel className="w-full">
-                <CarouselContent>
-                  {viewingImages.map((image, index) => (
-                    <CarouselItem key={index}>
-                      <div className="flex items-center justify-center p-1 md:p-2">
-                        <img
-                          src={image}
-                          alt={`Ảnh ${index + 1} của phòng ${viewingPhongName}`}
-                          className="max-h-[50vh] md:max-h-[60vh] w-auto object-contain rounded-lg"
-                        />
-                      </div>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-                {viewingImages.length > 1 && (
-                  <>
-                    <CarouselPrevious className="hidden md:flex" />
-                    <CarouselNext className="hidden md:flex" />
-                  </>
-                )}
-              </Carousel>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <div className="text-xs md:text-sm text-gray-600">
-              {viewingImages.length} ảnh {viewingImages.length > 1 && '- Vuốt để xem thêm'}
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       {/* Tenants Viewer Dialog */}
       <Dialog open={isTenantsViewerOpen} onOpenChange={setIsTenantsViewerOpen}>
@@ -637,7 +572,7 @@ export default function PhongPage() {
               Tổng cộng {viewingTenants.length} người đang thuê phòng này
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-3 md:space-y-4 py-2 md:py-4">
             {viewingTenants.map((tenant, index) => (
               <Card key={tenant._id || index} className="overflow-hidden">
@@ -657,7 +592,7 @@ export default function PhongPage() {
                           #{index + 1}
                         </Badge>
                       </div>
-                      
+
                       <div className="grid grid-cols-1 gap-2">
                         <div className="flex items-center gap-2 text-sm">
                           <span className="font-medium text-gray-600">SĐT:</span>
@@ -670,7 +605,7 @@ export default function PhongPage() {
               </Card>
             ))}
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsTenantsViewerOpen(false)} className="text-sm">
               Đóng
@@ -683,12 +618,12 @@ export default function PhongPage() {
 }
 
 // Form component for adding/editing phong
-function PhongForm({ 
-  phong, 
+function PhongForm({
+  phong,
   toaNhaList,
-  onClose, 
-  onSuccess 
-}: { 
+  onClose,
+  onSuccess
+}: {
   phong: Phong | null;
   toaNhaList: ToaNha[];
   onClose: () => void;
@@ -712,7 +647,6 @@ function PhongForm({
     giaThue: phong?.giaThue || 0,
     tienCoc: phong?.tienCoc || 0,
     moTa: phong?.moTa || '',
-    anhPhong: phong?.anhPhong || [],
     tienNghi: phong?.tienNghi || [],
     soNguoiToiDa: phong?.soNguoiToiDa || 1,
     trangThai: phong?.trangThai || 'trong',
@@ -722,11 +656,11 @@ function PhongForm({
   useEffect(() => {
     if (phong) {
       const toaNhaId = getToaNhaId(phong.toaNha);
-      
+
       console.log('Editing phong:', phong);
       console.log('toaNha object:', phong.toaNha);
       console.log('toaNha ID:', toaNhaId);
-      
+
       setFormData({
         maPhong: phong.maPhong || '',
         toaNha: toaNhaId,
@@ -735,7 +669,6 @@ function PhongForm({
         giaThue: phong.giaThue || 0,
         tienCoc: phong.tienCoc || 0,
         moTa: phong.moTa || '',
-        anhPhong: phong.anhPhong || [],
         tienNghi: phong.tienNghi || [],
         soNguoiToiDa: phong.soNguoiToiDa || 1,
         trangThai: phong.trangThai || 'trong',
@@ -749,7 +682,6 @@ function PhongForm({
         giaThue: 0,
         tienCoc: 0,
         moTa: '',
-        anhPhong: [],
         tienNghi: [],
         soNguoiToiDa: 1,
         trangThai: 'trong',
@@ -772,19 +704,16 @@ function PhongForm({
     { value: 'giuong', label: 'Giường' },
     { value: 'tuquanao', label: 'Tủ quần áo' },
     { value: 'banlamviec', label: 'Bàn làm việc' },
-    { value: 'ghe', label: 'Ghế' },
+    { value: 'quat', label: 'Quạt' },
     { value: 'tivi', label: 'TV' },
     { value: 'wifi', label: 'WiFi' },
     { value: 'maygiat', label: 'Máy giặt' },
     { value: 'bep', label: 'Bếp' },
-    { value: 'noi', label: 'Nồi' },
-    { value: 'chen', label: 'Chén' },
-    { value: 'bat', label: 'Bát' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const url = phong ? `/api/phong/${phong._id}` : '/api/phong';
       const method = phong ? 'PUT' : 'POST';
@@ -817,7 +746,7 @@ function PhongForm({
   const handleTienNghiChange = (tienNghi: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      tienNghi: checked 
+      tienNghi: checked
         ? [...prev.tienNghi, tienNghi]
         : prev.tienNghi.filter(t => t !== tienNghi)
     }));
@@ -826,17 +755,6 @@ function PhongForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
       <Tabs defaultValue="thong-tin" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="thong-tin" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <Info className="h-3 w-3 md:h-4 md:w-4" />
-            Thông tin
-          </TabsTrigger>
-          <TabsTrigger value="anh-phong" className="flex items-center gap-1 md:gap-2 text-xs md:text-sm">
-            <Image className="h-3 w-3 md:h-4 md:w-4" />
-            Ảnh phòng
-          </TabsTrigger>
-        </TabsList>
-        
         <TabsContent value="thong-tin" className="space-y-4 md:space-y-6 mt-4 md:mt-6">
           {/* Thông tin cơ bản */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
@@ -850,7 +768,7 @@ function PhongForm({
                 className="text-sm"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="toaNha" className="text-sm">Tòa nhà</Label>
               <Select value={formData.toaNha} onValueChange={(value) => setFormData(prev => ({ ...prev, toaNha: value }))}>
@@ -869,13 +787,12 @@ function PhongForm({
 
             <div className="space-y-2">
               <Label htmlFor="trangThai" className="text-sm">Trạng thái</Label>
-              <Select value={formData.trangThai} onValueChange={(value) => setFormData(prev => ({ ...prev, trangThai: value as 'trong' | 'daDat' | 'dangThue' | 'baoTri' }))}>
+              <Select value={formData.trangThai} onValueChange={(value) => setFormData(prev => ({ ...prev, trangThai: value as 'trong' | 'dangThue' | 'baoTri' }))}>
                 <SelectTrigger className="text-sm">
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="trong" className="text-sm">Trống</SelectItem>
-                  <SelectItem value="daDat" className="text-sm">Đã đặt</SelectItem>
                   <SelectItem value="dangThue" className="text-sm">Đang thuê</SelectItem>
                   <SelectItem value="baoTri" className="text-sm">Bảo trì</SelectItem>
                 </SelectContent>
@@ -897,7 +814,7 @@ function PhongForm({
                 className="text-sm"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="dienTich" className="text-sm">Diện tích (m²)</Label>
               <Input
@@ -910,7 +827,7 @@ function PhongForm({
                 className="text-sm"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="soNguoiToiDa" className="text-sm">Số người tối đa</Label>
               <Input
@@ -949,7 +866,7 @@ function PhongForm({
                 {formatCurrency(formData.giaThue)}
               </span>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="tienCoc" className="text-sm">Tiền cọc (VNĐ)</Label>
               <Input
@@ -998,24 +915,8 @@ function PhongForm({
             </div>
           </div>
         </TabsContent>
-        
-        <TabsContent value="anh-phong" className="space-y-4 md:space-y-6 mt-4 md:mt-6">
-          <div className="space-y-3 md:space-y-4">
-            <div>
-              <h3 className="text-base md:text-lg font-medium mb-1 md:mb-2">Quản lý ảnh phòng</h3>
-              <p className="text-xs md:text-sm text-gray-600">
-                Tải lên tối đa 10 ảnh để khách hàng có thể xem chi tiết phòng
-              </p>
-            </div>
-            
-            <PhongImageUpload
-              images={formData.anhPhong}
-              onImagesChange={(images: string[]) => setFormData(prev => ({ ...prev, anhPhong: images }))}
-              maxImages={10}
-              className="w-full"
-            />
-          </div>
-        </TabsContent>
+
+
       </Tabs>
 
       <DialogFooter className="gap-2">

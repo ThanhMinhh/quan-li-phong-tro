@@ -13,10 +13,6 @@ const khachThueSchema = z.object({
   ngaySinh: z.string().min(1, 'Ngày sinh là bắt buộc'),
   gioiTinh: z.enum(['nam', 'nu', 'khac']),
   queQuan: z.string().min(1, 'Quê quán là bắt buộc'),
-  anhCCCD: z.object({
-    matTruoc: z.string().optional(),
-    matSau: z.string().optional(),
-  }).optional(),
   ngheNghiep: z.string().optional(),
   matKhau: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự').optional(),
 });
@@ -101,7 +97,6 @@ export async function PUT(
     const updateData: any = {
       ...validatedData,
       ngaySinh: new Date(validatedData.ngaySinh),
-      anhCCCD: validatedData.anhCCCD || { matTruoc: '', matSau: '' },
     };
 
     // Nếu có mật khẩu mới, cập nhật

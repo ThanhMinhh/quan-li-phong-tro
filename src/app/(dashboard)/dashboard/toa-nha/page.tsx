@@ -33,12 +33,12 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Building2, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Building2,
   MapPin,
   Users,
   Eye,
@@ -66,13 +66,28 @@ export default function ToaNhaPage() {
   }, []);
 
   useEffect(() => {
-    fetchToaNha();
-  }, []);
+    if (session?.user && !isStaff) {
+      fetchToaNha();
+    }
+  }, [session, isStaff]);
+
+  if (isStaff) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Shield className="h-16 w-16 text-rose-500 opacity-20" />
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900">Truy cập bị từ chối</h2>
+          <p className="text-gray-500">Bạn không có quyền xem thông tin tòa nhà.</p>
+        </div>
+        <Button onClick={() => window.location.href = '/dashboard'}>Quay lại trang chủ</Button>
+      </div>
+    );
+  }
 
   const fetchToaNha = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      
+
       if (!forceRefresh) {
         const cachedData = cache.getCache();
         if (cachedData) {
@@ -81,7 +96,7 @@ export default function ToaNhaPage() {
           return;
         }
       }
-      
+
       const response = await fetch('/api/toa-nha');
       if (response.ok) {
         const result = await response.json();
@@ -121,7 +136,7 @@ export default function ToaNhaPage() {
       const response = await fetch(`/api/toa-nha/${id}`, {
         method: 'DELETE',
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
@@ -166,7 +181,7 @@ export default function ToaNhaPage() {
           <p className="text-xs md:text-sm text-gray-600">Danh sách tất cả tòa nhà trong hệ thống</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
-          <Button 
+          <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
@@ -194,8 +209,8 @@ export default function ToaNhaPage() {
                     {editingToaNha ? 'Cập nhật thông tin tòa nhà' : 'Nhập thông tin tòa nhà mới'}
                   </DialogDescription>
                 </DialogHeader>
-                
-                <ToaNhaForm 
+
+                <ToaNhaForm
                   toaNha={editingToaNha}
                   onClose={() => setIsDialogOpen(false)}
                   onSuccess={() => {
@@ -297,7 +312,7 @@ export default function ToaNhaPage() {
             />
           </div>
         </div>
-        
+
         {filteredToaNha.length === 0 ? (
           <Card className="p-6 text-center">
             <Building2 className="h-10 w-10 mx-auto text-gray-400 mb-3" />
@@ -310,7 +325,7 @@ export default function ToaNhaPage() {
               const phongTrong = (toaNha as any).phongTrong || 0;
               const phongDangThue = (toaNha as any).phongDangThue || 0;
               const tongPhong = toaNha.tongSoPhong;
-              
+
               return (
                 <Card key={toaNha._id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-3">
@@ -326,7 +341,7 @@ export default function ToaNhaPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2 mb-3 p-2 bg-gray-50 rounded-md">
                       <div className="text-center">
                         <div className="text-xs text-gray-600">Tổng</div>
@@ -404,11 +419,11 @@ export default function ToaNhaPage() {
 }
 
 // Form component for adding/editing toa nha
-function ToaNhaForm({ 
-  toaNha, 
-  onClose, 
-  onSuccess 
-}: { 
+function ToaNhaForm({
+  toaNha,
+  onClose,
+  onSuccess
+}: {
   toaNha: ToaNha | null;
   onClose: () => void;
   onSuccess: () => void;
@@ -432,7 +447,7 @@ function ToaNhaForm({
     fetch('/api/admin/chu-nha')
       .then(r => r.json())
       .then(res => { if (res.success) setChuNhaList(res.data); })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const tienNghiOptions = [
@@ -442,13 +457,13 @@ function ToaNhaForm({
     { value: 'giuXe', label: 'Giữ xe' },
     { value: 'thangMay', label: 'Thang máy' },
     { value: 'sanPhoi', label: 'Sân phơi' },
-    { value: 'nhaVeSinhChung', label: 'Nhà vệ sinh chung' },
+    { value: 'mayGiat', label: 'Máy giặt' },
     { value: 'khuBepChung', label: 'Khu bếp chung' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const submitData = {
         tenToaNha: formData.tenToaNha,
@@ -495,7 +510,7 @@ function ToaNhaForm({
   const handleTienNghiChange = (tienNghi: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      tienNghiChung: checked 
+      tienNghiChung: checked
         ? [...prev.tienNghiChung, tienNghi]
         : prev.tienNghiChung.filter(t => t !== tienNghi)
     }));
@@ -525,7 +540,7 @@ function ToaNhaForm({
             className="text-sm"
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="duong" className="text-sm">Tên đường</Label>
           <Input
@@ -549,7 +564,7 @@ function ToaNhaForm({
             className="text-sm"
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="quan" className="text-sm">Quận/Huyện</Label>
           <Input

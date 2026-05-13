@@ -42,9 +42,11 @@ import {
   Users,
   Home,
   Edit,
-  Trash2
+  Trash2,
+  Building2,
+  Wallet
 } from 'lucide-react';
-import { HoaDon, HopDong, Phong, KhachThue } from '@/types';
+import { HoaDon, HopDong, Phong, KhachThue, ToaNha } from '@/types';
 import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -88,15 +90,18 @@ export default function HoaDonPage() {
     hopDongList: HopDong[];
     phongList: Phong[];
     khachThueList: KhachThue[];
+    toaNhaList: ToaNha[];
   }>({ key: 'hoa-don-data', duration: 300000 }); // 5 phút
   
   const [hoaDonList, setHoaDonList] = useState<HoaDon[]>([]);
   const [hopDongList, setHopDongList] = useState<HopDong[]>([]);
   const [phongList, setPhongList] = useState<Phong[]>([]);
   const [khachThueList, setKhachThueList] = useState<KhachThue[]>([]);
+  const [toaNhaList, setToaNhaList] = useState<ToaNha[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [toaNhaFilter, setToaNhaFilter] = useState<string>('all');
   const [monthFilter, setMonthFilter] = useState<string>('all');
   const [yearFilter, setYearFilter] = useState<string>('all');
   const [isAutoCreating, setIsAutoCreating] = useState(false);
@@ -131,13 +136,14 @@ export default function HoaDonPage() {
           setHopDongList(cachedData.hopDongList || []);
           setPhongList(cachedData.phongList || []);
           setKhachThueList(cachedData.khachThueList || []);
+          setToaNhaList(cachedData.toaNhaList || []);
           setLoading(false);
           return;
         }
       }
       
       // Fetch hóa đơn từ API
-      const hoaDonResponse = await fetch('/api/hoa-don');
+      const hoaDonResponse = await fetch('/api/hoa-don?limit=1000');
       const hoaDonData = hoaDonResponse.ok ? await hoaDonResponse.json() : { data: [] };
       const hoaDons = hoaDonData.data || [];
       setHoaDonList(hoaDons);
@@ -151,9 +157,12 @@ export default function HoaDonPage() {
         const phongs = formData.data.phongList || [];
         const khachThues = formData.data.khachThueList || [];
         
+        const toaNhas = formData.data.toaNhaList || [];
+        
         setHopDongList(hopDongs);
         setPhongList(phongs);
         setKhachThueList(khachThues);
+        setToaNhaList(toaNhas);
         
         // Lưu vào cache
         cache.setCache({
@@ -161,6 +170,7 @@ export default function HoaDonPage() {
           hopDongList: hopDongs,
           phongList: phongs,
           khachThueList: khachThues,
+          toaNhaList: toaNhas,
         });
       } else {
         console.error('Failed to load form data:', formDataResponse.status);
@@ -186,7 +196,17 @@ export default function HoaDonPage() {
     const matchesMonth = monthFilter === 'all' || hoaDon.thang.toString() === monthFilter;
     const matchesYear = yearFilter === 'all' || hoaDon.nam.toString() === yearFilter;
     
-    return matchesSearch && matchesStatus && matchesMonth && matchesYear;
+    // Lọc theo tòa nhà (client-side hoặc fetch lại tùy logic, ở đây làm client-side cho mượt)
+    let matchesToaNha = true;
+    if (toaNhaFilter !== 'all') {
+      const phong = phongList.find(p => {
+        const hPhongId = typeof hoaDon.phong === 'object' ? hoaDon.phong._id : hoaDon.phong;
+        return p._id === hPhongId;
+      });
+      matchesToaNha = phong?.toaNha === toaNhaFilter;
+    }
+    
+    return matchesSearch && matchesStatus && matchesMonth && matchesYear && matchesToaNha;
   });
 
   const getStatusBadge = (status: string) => {
@@ -615,7 +635,7 @@ export default function HoaDonPage() {
             <div>
               <p className="text-[10px] md:text-xs font-medium text-gray-600">Quá hạn</p>
               <p className="text-base md:text-2xl font-bold text-orange-600">
-                {hoaDonList.filter(h => new Date(h.hanThanhToan) < new Date()).length}
+                {hoaDonList.filter(h => new Date(h.hanThanhToan) < new Date() && h.trangThai !== 'daThanhToan').length}
               </p>
             </div>
             <AlertCircle className="h-3 w-3 md:h-4 md:w-4 text-orange-600" />
@@ -625,12 +645,12 @@ export default function HoaDonPage() {
         <Card className="p-2 md:p-4">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
-              <p className="text-[10px] md:text-xs font-medium text-gray-600">Doanh thu</p>
-              <p className="text-xs md:text-2xl font-bold text-green-600 truncate">
-                {formatCurrency(hoaDonList.filter(h => h.trangThai === 'daThanhToan').reduce((sum, h) => sum + h.tongTien, 0))}
+              <p className="text-[10px] md:text-xs font-medium text-gray-600">Tổng doanh thu</p>
+              <p className="text-base md:text-2xl font-bold text-blue-600">
+                {formatCurrency(hoaDonList.reduce((acc, h) => acc + h.tongTien, 0))}
               </p>
             </div>
-            <Receipt className="h-3 w-3 md:h-4 md:w-4 text-green-600 flex-shrink-0" />
+            <Wallet className="h-3 w-3 md:h-4 md:w-4 text-blue-600 flex-shrink-0" />
           </div>
         </Card>
       </div>
@@ -660,6 +680,9 @@ export default function HoaDonPage() {
             onSearchChange={setSearchTerm}
             statusFilter={statusFilter}
             onStatusChange={setStatusFilter}
+            toaNhaFilter={toaNhaFilter}
+            onToaNhaChange={setToaNhaFilter}
+            toaNhaList={toaNhaList}
             monthFilter={monthFilter}
             onMonthChange={setMonthFilter}
             yearFilter={yearFilter}
@@ -689,6 +712,19 @@ export default function HoaDonPage() {
             />
           </div>
           <div className="grid grid-cols-3 gap-2">
+            <Select value={toaNhaFilter} onValueChange={setToaNhaFilter}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Tòa nhà" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all" className="text-sm">Tất cả tòa nhà</SelectItem>
+                {toaNhaList.map(t => (
+                  <SelectItem key={t._id} value={t._id!} className="text-sm">
+                    {t.tenToaNha}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="text-sm">
                 <SelectValue placeholder="Trạng thái" />

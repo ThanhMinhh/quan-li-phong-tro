@@ -18,6 +18,7 @@ const phongSchema = z.object({
   anhPhong: z.array(z.string()).optional(),
   tienNghi: z.array(z.string()).optional(),
   soNguoiToiDa: z.number().min(1, 'Số người tối đa phải lớn hơn 0').max(10, 'Số người tối đa không được quá 10'),
+  trangThai: z.enum(['trong', 'dangThue', 'baoTri']).optional(),
 });
 
 export async function GET(
@@ -99,7 +100,7 @@ export async function PUT(
         ...validatedData,
         anhPhong: validatedData.anhPhong || [],
         tienNghi: validatedData.tienNghi || [],
-        // Trạng thái sẽ được cập nhật tự động dựa trên hợp đồng
+        trangThai: body.trangThai || undefined,
       },
       { new: true, runValidators: true }
     ).populate('toaNha', 'tenToaNha diaChi');

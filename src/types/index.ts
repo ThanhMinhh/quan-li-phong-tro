@@ -8,11 +8,6 @@ export interface DiaChi {
   thanhPho: string;
 }
 
-export interface AnhCCCD {
-  matTruoc: string;
-  matSau: string;
-}
-
 export interface ThongTinChuyenKhoan {
   nganHang: string;
   soGiaoDich: string;
@@ -60,7 +55,7 @@ export interface Phong {
   moTa?: string;
   anhPhong: string[];
   tienNghi: string[];
-  trangThai: 'trong' | 'daDat' | 'dangThue' | 'baoTri';
+  trangThai: 'trong' | 'dangThue' | 'baoTri';
   soNguoiToiDa: number;
   ngayTao: Date;
   ngayCapNhat: Date;
@@ -88,7 +83,6 @@ export interface KhachThue {
   ngaySinh: Date;
   gioiTinh: 'nam' | 'nu' | 'khac';
   queQuan: string;
-  anhCCCD: AnhCCCD;
   ngheNghiep?: string;
   matKhau?: string;
   trangThai: 'dangThue' | 'daTraPhong' | 'chuaThue';
@@ -253,4 +247,5 @@ export interface DashboardStats {
   hoaDonSapDenHan: number;
   suCoCanXuLy: number;
   hopDongSapHetHan: number;
+  revenueChartData: Array<{ name: string; total: number }>;
 }

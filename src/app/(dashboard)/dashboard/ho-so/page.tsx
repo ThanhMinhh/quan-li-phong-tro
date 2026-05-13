@@ -53,6 +53,12 @@ export default function ProfilePage() {
     address: '',
     avatar: ''
   });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     document.title = 'Hồ sơ cá nhân';
@@ -132,6 +138,47 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error('Mật khẩu xác nhận không khớp');
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      toast.error('Mật khẩu mới phải có ít nhất 6 ký tự');
+      return;
+    }
+
+    setChangingPassword(true);
+    try {
+      const response = await fetch('/api/user/password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        toast.success('Đổi mật khẩu thành công');
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        toast.error(data.message || 'Đổi mật khẩu thất bại');
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast.error('Có lỗi xảy ra khi đổi mật khẩu');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     switch (role) {
       case 'admin':
@@ -191,11 +238,6 @@ export default function ProfilePage() {
             <Key className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
             <span className="hidden sm:inline">Bảo mật</span>
             <span className="sm:hidden">BM</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="text-xs md:text-sm">
-            <Bell className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-            <span className="hidden sm:inline">Thông báo</span>
-            <span className="sm:hidden">TB</span>
           </TabsTrigger>
         </TabsList>
 
@@ -333,37 +375,7 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {/* Account Information */}
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                <Calendar className="h-4 w-4 md:h-5 md:w-5" />
-                Thông tin tài khoản
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
-                  <div>
-                    <p className="text-xs md:text-sm font-medium">Ngày tạo tài khoản</p>
-                    <p className="text-xs md:text-sm text-gray-600">
-                      {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3 w-3 md:h-4 md:w-4 text-gray-500" />
-                  <div>
-                    <p className="text-xs md:text-sm font-medium">Lần đăng nhập cuối</p>
-                    <p className="text-xs md:text-sm text-gray-600">
-                      {profile?.lastLogin ? new Date(profile.lastLogin).toLocaleDateString('vi-VN') : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4 md:space-y-6">
@@ -377,36 +389,62 @@ export default function ProfilePage() {
                 Quản lý mật khẩu và bảo mật tài khoản
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
-              <div className="p-3 md:p-4 border rounded-lg bg-yellow-50 border-yellow-200">
-                <p className="text-xs md:text-sm text-yellow-800">
-                  Tính năng đổi mật khẩu sẽ được cập nhật trong phiên bản tiếp theo.
-                </p>
-              </div>
+            <CardContent className="p-4 md:p-6">
+              <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+                <div className="space-y-2">
+                  <Label htmlFor="currentPassword">Mật khẩu hiện tại</Label>
+                  <Input 
+                    id="currentPassword" 
+                    type="password" 
+                    placeholder="Nhập mật khẩu hiện tại"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="newPassword">Mật khẩu mới</Label>
+                  <Input 
+                    id="newPassword" 
+                    type="password" 
+                    placeholder="Nhập mật khẩu mới"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Xác nhận mật khẩu mới</Label>
+                  <Input 
+                    id="confirmPassword" 
+                    type="password" 
+                    placeholder="Nhập lại mật khẩu mới"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <Button type="submit" disabled={changingPassword} className="w-full sm:w-auto mt-2">
+                  {changingPassword ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Đang cập nhật...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Đổi mật khẩu
+                    </>
+                  )}
+                </Button>
+              </form>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications" className="space-y-4 md:space-y-6">
-          <Card>
-            <CardHeader className="p-4 md:p-6">
-              <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-                <Bell className="h-4 w-4 md:h-5 md:w-5" />
-                Cài đặt thông báo
-              </CardTitle>
-              <CardDescription className="text-xs md:text-sm">
-                Quản lý các thông báo và email
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6">
-              <div className="p-3 md:p-4 border rounded-lg bg-blue-50 border-blue-200">
-                <p className="text-xs md:text-sm text-blue-800">
-                  Tính năng cài đặt thông báo sẽ được cập nhật trong phiên bản tiếp theo.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
       </Tabs>
     </div>
   );

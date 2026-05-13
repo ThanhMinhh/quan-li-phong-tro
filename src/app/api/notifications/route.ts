@@ -27,22 +27,24 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
 
     let notifications = [];
+    const userId = session.user.id;
+    const userRole = session.user.role;
 
     switch (type) {
       case 'overdue_invoices':
-        notifications = await getOverdueInvoices();
+        notifications = await getOverdueInvoices(userId, userRole);
         break;
       case 'expiring_contracts':
-        notifications = await getExpiringContracts();
+        notifications = await getExpiringContracts(userId, userRole);
         break;
       case 'pending_issues':
-        notifications = await getPendingIssues();
+        notifications = await getPendingIssues(userId, userRole);
         break;
       case 'system':
-        notifications = await getSystemNotifications();
+        notifications = await getSystemNotifications(userId, userRole);
         break;
       default:
-        notifications = await getAllNotifications();
+        notifications = await getAllNotifications(userId, userRole);
     }
 
     // Paginate results
@@ -70,11 +72,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function getOverdueInvoices() {
-  const overdueInvoices = await HoaDon.find({
+import ToaNha from '@/models/ToaNha';
+import Phong from '@/models/Phong';
+
+async function getOwnedRoomIds(userId: string) {
+  const ownedBuildings = await ToaNha.find({ chuSoHuu: userId }).select('_id');
+  const ownedBuildingIds = ownedBuildings.map(b => b._id);
+  const rooms = await Phong.find({ toaNha: { $in: ownedBuildingIds } }).select('_id');
+  return rooms.map(r => r._id);
+}
+
+async function getOverdueInvoices(userId: string, userRole: string) {
+  const query: any = {
     hanThanhToan: { $lt: new Date() },
-    trangThai: { $in: ['chuaThanhToan', 'daThanhToanMotPhan'] },
-  })
+    trangThai: { $in: ['chuaThanhToan'] },
+  };
+
+  if (userRole === 'chuNha') {
+    const roomIds = await getOwnedRoomIds(userId);
+    query.phong = { $in: roomIds };
+  }
+
+  const overdueInvoices = await HoaDon.find(query)
     .populate('hopDong', 'maHopDong phong')
     .populate('phong', 'maPhong toaNha')
     .populate('khachThue', 'hoTen soDienThoai')
@@ -98,14 +117,21 @@ async function getOverdueInvoices() {
   }));
 }
 
-async function getExpiringContracts() {
+async function getExpiringContracts(userId: string, userRole: string) {
   const nextMonth = new Date();
   nextMonth.setDate(nextMonth.getDate() + 30);
 
-  const expiringContracts = await HopDong.find({
+  const query: any = {
     ngayKetThuc: { $lte: nextMonth },
     trangThai: 'hoatDong',
-  })
+  };
+
+  if (userRole === 'chuNha') {
+    const roomIds = await getOwnedRoomIds(userId);
+    query.phong = { $in: roomIds };
+  }
+
+  const expiringContracts = await HopDong.find(query)
     .populate('phong', 'maPhong toaNha')
     .populate('nguoiDaiDien', 'hoTen soDienThoai')
     .sort({ ngayKetThuc: 1 });
@@ -132,10 +158,17 @@ async function getExpiringContracts() {
   });
 }
 
-async function getPendingIssues() {
-  const pendingIssues = await SuCo.find({
+async function getPendingIssues(userId: string, userRole: string) {
+  const query: any = {
     trangThai: { $in: ['moi', 'dangXuLy'] },
-  })
+  };
+
+  if (userRole === 'chuNha') {
+    const roomIds = await getOwnedRoomIds(userId);
+    query.phong = { $in: roomIds };
+  }
+
+  const pendingIssues = await SuCo.find(query)
     .populate('phong', 'maPhong toaNha')
     .populate('khachThue', 'hoTen soDienThoai')
     .sort({ mucDoUuTien: -1, ngayBaoCao: -1 });
@@ -174,11 +207,22 @@ async function getPendingIssues() {
   });
 }
 
-async function getSystemNotifications() {
-  // Get system-wide notifications (like maintenance, updates, etc.)
-  const systemNotifications = await ThongBao.find({
+async function getSystemNotifications(userId: string, userRole: string) {
+  const query: any = {
     loai: 'chung',
-  })
+  };
+
+  if (userRole === 'chuNha') {
+    const ownedBuildings = await ToaNha.find({ chuSoHuu: userId }).select('_id');
+    const ownedBuildingIds = ownedBuildings.map(b => b._id);
+    query.$or = [
+      { toaNha: { $in: ownedBuildingIds } },
+      { nguoiGui: userId }
+    ];
+  }
+
+  // Get system-wide notifications
+  const systemNotifications = await ThongBao.find(query)
     .populate('nguoiGui', 'ten email')
     .sort({ ngayGui: -1 })
     .limit(10);
@@ -197,12 +241,12 @@ async function getSystemNotifications() {
   }));
 }
 
-async function getAllNotifications() {
+async function getAllNotifications(userId: string, userRole: string) {
   const [overdueInvoices, expiringContracts, pendingIssues, systemNotifications] = await Promise.all([
-    getOverdueInvoices(),
-    getExpiringContracts(),
-    getPendingIssues(),
-    getSystemNotifications(),
+    getOverdueInvoices(userId, userRole),
+    getExpiringContracts(userId, userRole),
+    getPendingIssues(userId, userRole),
+    getSystemNotifications(userId, userRole),
   ]);
 
   // Combine and sort by priority and date

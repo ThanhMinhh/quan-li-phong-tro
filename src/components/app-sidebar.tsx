@@ -36,90 +36,78 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // Tạo navigation items dựa trên role
   const navMain = React.useMemo(() => {
-    const baseItems = [
-      {
+    const role = session?.user?.role;
+    
+    const items = [];
+
+    // Quản lý cơ bản - Ẩn đối với nhân viên
+    if (role !== 'nhanVien') {
+      items.push({
         title: "Quản lý cơ bản",
         url: "#",
         icon: Building,
         isActive: true,
         items: [
-          {
-            title: "Tòa nhà",
-            url: "/dashboard/toa-nha",
-          },
-          {
-            title: "Phòng",
-            url: "/dashboard/phong",
-          },
-          {
-            title: "Khách thuê",
-            url: "/dashboard/khach-thue",
-          },
+          { title: "Tòa nhà", url: "/dashboard/toa-nha" },
+          { title: "Phòng", url: "/dashboard/phong" },
+          { title: "Khách thuê", url: "/dashboard/khach-thue" },
         ],
-      },
-      {
+      });
+    }
+
+    // Tài chính - Nhân viên chỉ thấy Hóa đơn
+    if (role === 'nhanVien') {
+      items.push({
         title: "Tài chính",
         url: "#",
         icon: Receipt,
         items: [
-          {
-            title: "Hợp đồng",
-            url: "/dashboard/hop-dong",
-          },
-          {
-            title: "Hóa đơn",
-            url: "/dashboard/hoa-don",
-          },
+          { title: "Hóa đơn", url: "/dashboard/hoa-don" },
         ],
-      },
-      {
-        title: "Vận hành",
+      });
+    } else {
+      items.push({
+        title: "Tài chính",
         url: "#",
-        icon: AlertTriangle,
+        icon: Receipt,
         items: [
-          {
-            title: "Sự cố",
-            url: "/dashboard/su-co",
-          },
-          {
-            title: "Thông báo",
-            url: "/dashboard/thong-bao",
-          },
+          { title: "Hợp đồng", url: "/dashboard/hop-dong" },
+          { title: "Hóa đơn", url: "/dashboard/hoa-don" },
         ],
-      },
-      {
-        title: "Cài đặt",
-        url: "#",
-        icon: Settings,
-        items: [
-          {
-            title: "Hồ sơ",
-            url: "/dashboard/ho-so",
-          },
-          {
-            title: "Cài đặt",
-            url: "/dashboard/cai-dat",
-          },
-        ],
-      },
-    ]
+      });
+    }
 
-    // Thêm mục quản lý admin nếu là admin
-    if (session?.user?.role === 'admin') {
-      baseItems.splice(3, 0, {
+    // Vận hành - Tất cả mọi người thấy
+    items.push({
+      title: "Vận hành",
+      url: "#",
+      icon: AlertTriangle,
+      items: [
+        { title: "Sự cố", url: "/dashboard/su-co" },
+        { title: "Thông báo", url: "/dashboard/thong-bao" },
+      ],
+    });
+
+    // Quản trị - Chỉ Admin thấy
+    if (role === 'admin') {
+      items.push({
         title: "Quản trị",
         url: "#",
         icon: Shield,
         items: [
-          {
-            title: "Quản lý tài khoản",
-            url: "/dashboard/quan-ly-tai-khoan",
-          },
+          { title: "Quản lý tài khoản", url: "/dashboard/quan-ly-tai-khoan" },
         ],
-      })
+      });
     }
 
-    return baseItems
+    // Hồ sơ - Tất cả mọi người thấy
+    items.push({
+      title: "Hồ sơ",
+      url: "/dashboard/ho-so",
+      icon: Settings,
+    });
+
+    return items;
   }, [session?.user?.role])
 
   const userData = React.useMemo(() => ({

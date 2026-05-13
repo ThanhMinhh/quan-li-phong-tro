@@ -3,13 +3,16 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import dbConnect from '@/lib/mongodb';
 import ThongBao from '@/models/ThongBao';
+import ToaNha from '@/models/ToaNha';
+import NguoiDung from '@/models/NguoiDung';
+import Phong from '@/models/Phong';
 import { z } from 'zod';
 
 const thongBaoSchema = z.object({
   tieuDe: z.string().min(1, 'Tiêu đề là bắt buộc'),
   noiDung: z.string().min(1, 'Nội dung là bắt buộc'),
   loai: z.enum(['chung', 'hoaDon', 'suCo', 'hopDong', 'khac']).optional(),
-  nguoiNhan: z.array(z.string()).min(1, 'Phải có ít nhất 1 người nhận'),
+  nguoiNhan: z.array(z.string()).optional(),
   phong: z.array(z.string()).optional(),
   toaNha: z.string().optional(),
 });
@@ -44,6 +47,18 @@ export async function GET(request: NextRequest) {
     
     if (loai) {
       query.loai = loai;
+    }
+
+    // Filter by owner if user is chuNha
+    if (session.user.role === 'chuNha') {
+      const ownedBuildings = await ToaNha.find({ chuSoHuu: session.user.id }).select('_id');
+      const ownedBuildingIds = ownedBuildings.map(b => b._id);
+      
+      query.$or = query.$or || [];
+      query.$or.push(
+        { toaNha: { $in: ownedBuildingIds } },
+        { nguoiGui: session.user.id }
+      );
     }
 
     const thongBaoList = await ThongBao.find(query)
@@ -96,6 +111,7 @@ export async function POST(request: NextRequest) {
       ...validatedData,
       nguoiGui: session.user.id,
       loai: validatedData.loai || 'chung',
+      nguoiNhan: validatedData.nguoiNhan || [],
       phong: validatedData.phong || [],
       daDoc: [],
     });

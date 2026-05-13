@@ -5,6 +5,8 @@ import dbConnect from '@/lib/mongodb';
 import SuCo from '@/models/SuCo';
 import Phong from '@/models/Phong';
 import KhachThue from '@/models/KhachThue';
+import ToaNha from '@/models/ToaNha';
+import NguoiDung from '@/models/NguoiDung';
 import { z } from 'zod';
 
 const suCoSchema = z.object({
@@ -58,6 +60,17 @@ export async function GET(request: NextRequest) {
     
     if (trangThai) {
       query.trangThai = trangThai;
+    }
+
+    // Filter by owner if user is chuNha
+    if (session.user.role === 'chuNha') {
+      const ownedBuildings = await ToaNha.find({ chuSoHuu: session.user.id }).select('_id');
+      const ownedBuildingIds = ownedBuildings.map(b => b._id);
+      
+      const rooms = await Phong.find({ toaNha: { $in: ownedBuildingIds } }).select('_id');
+      const roomIds = rooms.map(r => r._id);
+      
+      query.phong = { $in: roomIds };
     }
 
     const suCoList = await SuCo.find(query)

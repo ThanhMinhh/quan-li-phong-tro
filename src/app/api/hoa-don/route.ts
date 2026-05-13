@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectToDatabase from '@/lib/mongodb';
 import HoaDon from '@/models/HoaDon';
 import HopDong from '@/models/HopDong';
+import Phong from '@/models/Phong';
+import ToaNha from '@/models/ToaNha';
+import KhachThue from '@/models/KhachThue';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { PhiDichVu } from '@/types';
@@ -22,6 +25,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const hopDongId = searchParams.get('hopDongId');
     const trangThai = searchParams.get('trangThai');
+    const toaNhaId = searchParams.get('toaNhaId');
 
     // Nếu có ID, lấy hóa đơn cụ thể
     if (id) {
@@ -65,6 +69,49 @@ export async function GET(request: NextRequest) {
     }
     if (trangThai) {
       query.trangThai = trangThai;
+    }
+    
+    // Phân quyền dữ liệu
+    const userRole = session.user.role;
+    const userId = session.user.id;
+
+    if (userRole !== 'admin') {
+      // Đối với bất kỳ ai không phải Admin (Chủ nhà, Nhân viên, hoặc vai trò không xác định)
+      // Mặc định: Chỉ xem những gì thuộc sở hữu hoặc được gán quản lý
+      
+      // 1. Lấy danh sách tòa nhà thuộc sở hữu (đối với chuNha) hoặc tất cả (đối với nhanVien tạm thời)
+      let ownedBuildingIds: any[] = [];
+      if (userRole === 'chuNha' || !userRole) {
+        const ownedBuildings = await ToaNha.find({ chuSoHuu: userId }).select('_id');
+        ownedBuildingIds = ownedBuildings.map(b => b._id);
+      }
+      
+      // 2. Lấy danh sách phòng thuộc các tòa nhà đó
+      const accessibleRooms = userRole === 'nhanVien' 
+        ? await Phong.find().select('_id') // Nhân viên tạm thời xem tất cả nếu không lọc
+        : await Phong.find({ toaNha: { $in: ownedBuildingIds } }).select('_id');
+      
+      const accessibleRoomIds = accessibleRooms.map(r => r._id);
+      
+      if (toaNhaId && toaNhaId !== 'all') {
+        // Nếu có lọc theo tòa nhà, kiểm tra quyền truy cập
+        const canAccessToaNha = userRole === 'nhanVien' || ownedBuildingIds.some(id => id.toString() === toaNhaId);
+        
+        if (canAccessToaNha) {
+          const filteredRooms = await Phong.find({ toaNha: toaNhaId }).select('_id');
+          query.phong = { $in: filteredRooms.map(r => r._id) };
+        } else {
+          query.phong = { $in: accessibleRoomIds };
+        }
+      } else {
+        query.phong = { $in: accessibleRoomIds };
+      }
+    } else {
+      // Admin: Xem tất cả, lọc theo tòa nhà nếu có
+      if (toaNhaId && toaNhaId !== 'all') {
+        const rooms = await Phong.find({ toaNha: toaNhaId }).select('_id');
+        query.phong = { $in: rooms.map(r => r._id) };
+      }
     }
 
     const skip = (page - 1) * limit;

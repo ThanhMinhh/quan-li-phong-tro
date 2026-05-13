@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
     // Đếm số hóa đơn chưa thanh toán
     const soHoaDonChuaThanhToan = await HoaDon.countDocuments({
       khachThue: khachThue._id,
-      trangThai: { $in: ['chuaThanhToan', 'daThanhToanMotPhan', 'quaHan'] }
+      trangThai: { $in: ['chuaThanhToan', 'quaHan'] }
     });
 
     // Lấy hóa đơn gần nhất

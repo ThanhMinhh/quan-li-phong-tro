@@ -5,6 +5,7 @@ import connectToDatabase from '@/lib/mongodb';
 import HopDong from '@/models/HopDong';
 import Phong from '@/models/Phong';
 import KhachThue from '@/models/KhachThue';
+import ToaNha from '@/models/ToaNha';
 
 export async function GET(request: NextRequest) {
   try {
@@ -52,12 +53,20 @@ export async function GET(request: NextRequest) {
       .sort({ maHopDong: 1 });
     console.log('Fetched hopDongList:', hopDongList.length);
 
+    // Get all buildings for reference
+    console.log('Fetching toaNhaList...');
+    const toaNhaList = await ToaNha.find()
+      .select('tenToaNha diaChi')
+      .sort({ tenToaNha: 1 });
+    console.log('Fetched toaNhaList:', toaNhaList.length);
+
     return NextResponse.json({
       success: true,
       data: {
         hopDongList,
         phongList,
         khachThueList,
+        toaNhaList,
       },
     });
 

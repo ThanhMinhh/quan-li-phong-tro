@@ -290,7 +290,34 @@ const createColumns = (props: KhachThueTableProps): ColumnDef<KhachThue>[] => [
     header: "Tài khoản",
     cell: ({ row }) => {
       const khachThue = row.original as any;
-      const hasPassword = !!khachThue.matKhau;
+      const hasPassword = !!khachThue.matKhau && khachThue.matKhau !== '';
+      const [loading, setLoading] = React.useState(false);
+
+      const handleQuickCreate = async () => {
+        if (loading) return;
+        setLoading(true);
+        try {
+          const response = await fetch('/api/khach-thue/quick-account', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: khachThue._id })
+          });
+          const result = await response.json();
+          if (result.success) {
+            import('sonner').then(({ toast }) => toast.success(result.message));
+            // Xóa cache trước khi reload để lấy data mới
+            sessionStorage.removeItem('khach-thue-data');
+            // Reload page or refresh data
+            window.location.reload();
+          } else {
+            import('sonner').then(({ toast }) => toast.error(result.message || 'Lỗi khi tạo tài khoản'));
+          }
+        } catch (error) {
+          import('sonner').then(({ toast }) => toast.error('Có lỗi xảy ra'));
+        } finally {
+          setLoading(false);
+        }
+      };
       
       return (
         <div className="flex items-center gap-2">
@@ -301,10 +328,21 @@ const createColumns = (props: KhachThueTableProps): ColumnDef<KhachThue>[] => [
               Đã tạo
             </Badge>
           ) : (
-            <Badge variant="secondary" className="gap-1">
-              <X className="h-3 w-3" />
-              Chưa tạo
-            </Badge>
+            <div className="flex items-center gap-1">
+              <Badge variant="secondary" className="gap-1">
+                <X className="h-3 w-3" />
+                Chưa tạo
+              </Badge>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-[10px] px-2 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                onClick={handleQuickCreate}
+                disabled={loading}
+              >
+                {loading ? '...' : 'Tạo nhanh'}
+              </Button>
+            </div>
           )}
         </div>
       );

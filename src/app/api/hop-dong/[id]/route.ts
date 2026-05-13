@@ -5,6 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import HopDong from '@/models/HopDong';
 import Phong from '@/models/Phong';
 import KhachThue from '@/models/KhachThue';
+import ToaNha from '@/models/ToaNha';
 import { updatePhongStatus, updateAllKhachThueStatus } from '@/lib/status-utils';
 import { z } from 'zod';
 

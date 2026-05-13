@@ -5,6 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import ToaNha from '@/models/ToaNha';
 import Phong from '@/models/Phong';
 import HopDong from '@/models/HopDong';
+import NguoiDung from '@/models/NguoiDung';
 import { z } from 'zod';
 import mongoose from 'mongoose';
 
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10');
     const search = searchParams.get('search') || '';
 
-    const query = search 
+    const query: any = search 
       ? {
           $or: [
             { tenToaNha: { $regex: search, $options: 'i' } },
@@ -50,6 +51,16 @@ export async function GET(request: NextRequest) {
           ]
         }
       : {};
+
+    // Phân quyền dữ liệu
+    const userRole = session.user.role;
+    const userId = session.user.id;
+
+    if (userRole !== 'admin') {
+      if (userRole === 'chuNha' || !userRole) {
+        query.chuSoHuu = userId;
+      }
+    }
 
     const toaNhaList = await ToaNha.find(query)
       .populate('chuSoHuu', 'ten email')
@@ -75,12 +86,7 @@ export async function GET(request: NextRequest) {
           trangThai: 'dangThue' 
         });
         
-        // Đếm số phòng đã đặt
-        const phongDaDat = await Phong.countDocuments({ 
-          toaNha: toaNha._id, 
-          trangThai: 'daDat' 
-        });
-        
+
         // Đếm số phòng bảo trì
         const phongBaoTri = await Phong.countDocuments({ 
           toaNha: toaNha._id, 
@@ -92,7 +98,6 @@ export async function GET(request: NextRequest) {
           tongSoPhong,
           phongTrong,
           phongDangThue,
-          phongDaDat,
           phongBaoTri
         };
       })

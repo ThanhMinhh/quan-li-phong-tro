@@ -5,6 +5,7 @@ import dbConnect from '@/lib/mongodb';
 import HopDong from '@/models/HopDong';
 import Phong from '@/models/Phong';
 import KhachThue from '@/models/KhachThue';
+import ToaNha from '@/models/ToaNha';
 import { updatePhongStatus, updateAllKhachThueStatus } from '@/lib/status-utils';
 import { z } from 'zod';
 
@@ -63,6 +64,22 @@ export async function GET(request: NextRequest) {
     
     if (trangThai) {
       query.trangThai = trangThai;
+    }
+
+    // Phân quyền dữ liệu
+    const userRole = session.user.role;
+    const userId = session.user.id;
+
+    if (userRole !== 'admin') {
+      if (userRole === 'chuNha' || !userRole) {
+        const ownedBuildings = await ToaNha.find({ chuSoHuu: userId }).select('_id');
+        const ownedBuildingIds = ownedBuildings.map(b => b._id);
+        
+        const rooms = await Phong.find({ toaNha: { $in: ownedBuildingIds } }).select('_id');
+        const roomIds = rooms.map(r => r._id);
+        
+        query.phong = { $in: roomIds };
+      }
     }
 
     const hopDongList = await HopDong.find(query)

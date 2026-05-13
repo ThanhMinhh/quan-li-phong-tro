@@ -100,12 +100,7 @@ export function NavUser({
                   Hồ sơ
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/cai-dat">
-                  <Settings />
-                  Cài đặt
-                </Link>
-              </DropdownMenuItem>
+
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

@@ -5,11 +5,11 @@ import KhachThue from '@/models/KhachThue';
 /**
  * Tính trạng thái phòng dựa trên hợp đồng
  * @param phongId - ID của phòng
- * @returns Trạng thái phòng: 'trong' | 'daDat' | 'dangThue' | 'baoTri'
+ * @returns Trạng thái phòng: 'trong' | 'dangThue' | 'baoTri'
  */
-export async function calculatePhongStatus(phongId: string): Promise<'trong' | 'daDat' | 'dangThue' | 'baoTri'> {
+export async function calculatePhongStatus(phongId: string): Promise<'trong' | 'dangThue' | 'baoTri'> {
   try {
-    // Tìm hợp đồng đang hoạt động của phòng
+    // 1. Tìm hợp đồng đang hoạt động của phòng - ƯU TIÊN CAO NHẤT
     const hopDongHoatDong = await HopDong.findOne({
       phong: phongId,
       trangThai: 'hoatDong',
@@ -21,15 +21,12 @@ export async function calculatePhongStatus(phongId: string): Promise<'trong' | '
       return 'dangThue';
     }
 
-    // Kiểm tra có hợp đồng đã đặt nhưng chưa bắt đầu không
-    const hopDongDaDat = await HopDong.findOne({
-      phong: phongId,
-      trangThai: 'hoatDong',
-      ngayBatDau: { $gt: new Date() }
-    });
-
-    if (hopDongDaDat) {
-      return 'daDat';
+    // 2. Kiểm tra trạng thái hiện tại của phòng
+    const phong = await Phong.findById(phongId).select('trangThai');
+    
+    // Nếu phòng đang ở trạng thái 'baoTri' và không có hợp đồng hoạt động, giữ nguyên 'baoTri'
+    if (phong && phong.trangThai === 'baoTri') {
+      return 'baoTri';
     }
 
     // Mặc định là trống

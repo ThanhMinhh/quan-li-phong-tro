@@ -422,29 +422,35 @@ export default function ChinhSuaHopDongPage() {
               <Label className="text-xs md:text-sm">Khách thuê</Label>
               <Popover open={openKhachThue} onOpenChange={setOpenKhachThue}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
+                  <div
                     role="combobox"
                     aria-expanded={openKhachThue}
-                    className="w-full justify-between min-h-10 h-auto text-sm"
-                    size="sm"
+                    className="flex w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm hover:bg-accent hover:text-accent-foreground min-h-10 h-auto cursor-pointer"
                   >
-                    <div className="flex flex-wrap gap-1 text-xs md:text-sm">
+                    <div className="flex flex-wrap gap-1 text-xs md:text-sm w-full">
                       {formData.khachThueId.length === 0 ? (
                         <span className="text-muted-foreground">Chọn khách thuê...</span>
                       ) : (
                         formData.khachThueId.map((id) => {
                           const khachThue = khachThueList.find(k => k._id === id);
                           return (
-                            <Badge key={id} variant="secondary" className="mr-1">
+                            <Badge key={id} variant="secondary" className="mr-1 flex items-center gap-1 z-10">
                               {khachThue?.hoTen}
+                              <X 
+                                className="h-3 w-3 cursor-pointer hover:text-red-500 hover:bg-red-100 rounded-full transition-colors" 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleKhachThue(id);
+                                }}
+                              />
                             </Badge>
                           );
                         })
                       )}
                     </div>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
+                  </div>
                 </PopoverTrigger>
                 <PopoverContent className="w-[90vw] md:w-full p-0">
                   <Command>

@@ -48,8 +48,6 @@ const getStatusBadge = (status: string) => {
   switch (status) {
     case 'chuaThanhToan':
       return <Badge variant="destructive">Chưa thanh toán</Badge>;
-    case 'daThanhToanMotPhan':
-      return <Badge variant="secondary">Thanh toán một phần</Badge>;
     case 'daThanhToan':
       return <Badge variant="default">Đã thanh toán</Badge>;
     case 'quaHan':

@@ -14,10 +14,31 @@ import {
   Calendar,
   Clock,
   ArrowUpRight,
-  FileText
+  FileText,
+  Plus,
+  ArrowRight,
+  Wallet,
+  Activity,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { DashboardStats } from '@/types';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar
+} from 'recharts';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -25,9 +46,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const isStaff = session?.user?.role === 'nhanVien';
+  const isOwner = session?.user?.role === 'chuNha';
 
   useEffect(() => {
-    document.title = 'Tổng quan';
+    document.title = 'Tổng quan hệ thống';
   }, []);
 
   useEffect(() => {
@@ -54,24 +76,36 @@ export default function DashboardPage() {
     return new Intl.NumberFormat('vi-VN', {
       style: 'currency',
       currency: 'VND',
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
+  const COLORS = ['#10b981', '#3b82f6', '#f59e0b']; // Emerald, Blue, Amber
+
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4">
+        <div className="flex justify-between items-center mb-8">
+          <div className="space-y-2">
+            <div className="h-8 w-64 bg-muted animate-pulse rounded-lg" />
+            <div className="h-4 w-48 bg-muted animate-pulse rounded-lg" />
+          </div>
+          <div className="h-10 w-40 bg-muted animate-pulse rounded-lg" />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <Card key={i} className="animate-pulse glass-card">
-              <CardHeader className="pb-2">
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 bg-muted rounded w-1/2 mb-2"></div>
-                <div className="h-3 bg-muted rounded w-full"></div>
+            <Card key={i} className="animate-pulse border-none bg-muted/30">
+              <CardContent className="p-6">
+                <div className="h-4 bg-muted rounded w-3/4 mb-4" />
+                <div className="h-8 bg-muted rounded w-1/2 mb-2" />
+                <div className="h-3 bg-muted rounded w-full" />
               </CardContent>
             </Card>
           ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 h-[400px] bg-muted/20 animate-pulse rounded-xl" />
+          <div className="h-[400px] bg-muted/20 animate-pulse rounded-xl" />
         </div>
       </div>
     );
@@ -79,130 +113,165 @@ export default function DashboardPage() {
 
   if (!stats) return null;
 
+  const pieData = [
+    { name: 'Đang thuê', value: stats.phongDangThue },
+    { name: 'Phòng trống', value: stats.phongTrong },
+    { name: 'Bảo trì', value: stats.phongBaoTri },
+  ];
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-8 pb-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight font-heading">Tổng quan hệ thống</h1>
-          <p className="text-muted-foreground mt-1">Chào mừng quay trở lại.</p>
+          <p className="text-muted-foreground mt-1">Chào mừng quay trở lại, {session?.user?.name || 'Chủ trọ'}.</p>
         </div>
-        <div className="hidden sm:flex items-center gap-3 bg-card px-4 py-2 rounded-xl border border-border/50">
+        <div className="hidden sm:flex items-center gap-3 bg-card px-4 py-2 rounded-xl border border-border/50 shadow-sm">
           <Calendar className="w-4 h-4 text-primary" />
           <span className="text-sm font-medium">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
         </div>
       </div>
 
-      {/* Main Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Main Stats Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Tổng số phòng', value: stats.tongSoPhong, sub: `${stats.phongDangThue} đang thuê`, icon: Building2, color: 'text-primary', bg: 'bg-primary/10' },
-          { label: 'Phòng trống', value: stats.phongTrong, sub: `${((stats.phongTrong / stats.tongSoPhong) * 100).toFixed(1)}% khả dụng`, icon: DoorOpen, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-          !isStaff 
-            ? { label: 'Doanh thu tháng', value: formatCurrency(stats.doanhThuThang), sub: '+12% so với tháng trước', icon: TrendingUp, color: 'text-accent', bg: 'bg-accent/10' }
-            : { label: 'Hợp đồng mới', value: stats.hopDongSapHetHan, sub: 'Cần theo dõi gia hạn', icon: FileText, color: 'text-accent', bg: 'bg-accent/10' },
-          { label: 'Sự cố cần xử lý', value: stats.suCoCanXuLy, sub: 'Cần phản hồi ngay', icon: AlertTriangle, color: 'text-destructive', bg: 'bg-destructive/10' },
-        ].map((item, idx) => (
-          <Card key={idx} className="glass-card hover:scale-[1.02] transition-transform duration-300 overflow-hidden group">
+          { label: 'Doanh thu tháng', value: formatCurrency(stats.doanhThuThang), trend: '+12.5%', icon: Wallet, color: 'from-blue-500 to-indigo-600', shadow: 'shadow-blue-500/20' },
+          { label: 'Tỷ lệ lấp đầy', value: `${((stats.phongDangThue / stats.tongSoPhong) * 100).toFixed(1)}%`, trend: '+2.1%', icon: Activity, color: 'from-emerald-500 to-teal-600', shadow: 'shadow-emerald-500/20' },
+          { label: 'Hợp đồng sắp hết hạn', value: stats.hopDongSapHetHan, trend: 'Cần gia hạn', icon: FileText, color: 'from-amber-500 to-orange-600', shadow: 'shadow-amber-500/20' },
+          { label: 'Sự cố mới', value: stats.suCoCanXuLy, trend: 'Cần xử lý', icon: AlertCircle, color: 'from-rose-500 to-red-600', shadow: 'shadow-rose-500/20' },
+        ].filter(Boolean).map((item: any, idx) => (
+          <Card key={idx} className={`border-none shadow-xl ${item.shadow} hover:-translate-y-1 transition-all duration-300 overflow-hidden`}>
             <CardContent className="p-6 relative">
-              <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full ${item.bg} opacity-20 group-hover:scale-110 transition-transform duration-500`} />
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{item.label}</p>
-                <item.icon className={`w-5 h-5 ${item.color}`} />
+              <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${item.color} opacity-10 rounded-bl-full`} />
+              <div className="flex items-center gap-4 mb-4">
+                <div className={`p-3 rounded-2xl bg-gradient-to-br ${item.color} text-white shadow-lg`}>
+                  <item.icon className="w-6 h-6" />
+                </div>
+                <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">{item.label}</p>
               </div>
-              <div>
+              <div className="flex items-end justify-between">
                 <h3 className="text-2xl font-bold font-heading">{item.value}</h3>
-                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                  {item.sub}
-                  {idx === 2 && <ArrowUpRight className="w-3 h-3 text-emerald-500" />}
-                </p>
+                <Badge variant={idx === 3 ? 'destructive' : 'secondary'} className="rounded-full px-2 py-0.5 text-[10px]">
+                  {item.trend}
+                </Badge>
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Grid Layout for details */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activities Section */}
-        <Card className="lg:col-span-2 glass-card">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-xl font-heading">Hoạt động gần đây</CardTitle>
-              <CardDescription>Các tương tác mới nhất trên hệ thống</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">Xem tất cả</Button>
-          </CardHeader>
-          <CardContent className="space-y-1">
-            {[
-              { type: 'New Tenant', title: 'Khách thuê mới đăng ký', detail: 'Nguyễn Văn A - Phòng P101', time: '10 phút trước', badge: 'Mới', variant: 'secondary' as const },
-              !isStaff && { type: 'Payment', title: 'Thanh toán thành công', detail: 'Phòng P102 - 2,500,000 VNĐ', time: '2 giờ trước', badge: 'Hoàn thành', variant: 'outline' as const },
-              { type: 'Issue', title: 'Báo cáo sự cố', detail: 'Phòng P105 - Hỏng điều hòa', time: '5 giờ trước', badge: 'Cần xử lý', variant: 'destructive' as const },
-              { type: 'Contract', title: 'Hợp đồng sắp hết hạn', detail: 'Trần Thị B - Tòa nhà Sunshine', time: '1 ngày trước', badge: 'Cảnh báo', variant: 'secondary' as const },
-            ].filter(Boolean).map((activity: any, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-colors group">
-                <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${activity.variant === 'destructive' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
-                    {activity.type === 'New Tenant' ? <Users className="w-5 h-5" /> : activity.type === 'Payment' ? <Receipt className="w-5 h-5" /> : activity.type === 'Issue' ? <AlertTriangle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">{activity.title}</p>
-                    <p className="text-xs text-muted-foreground">{activity.detail}</p>
-                  </div>
+      {/* Visual Data Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Revenue Chart */}
+        <Card className="lg:col-span-2 border-none shadow-2xl shadow-gray-200/50 bg-white dark:bg-slate-900 rounded-3xl overflow-hidden">
+            <CardHeader className="p-8 pb-0">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-heading">Phân tích doanh thu</CardTitle>
+                  <CardDescription>Xu hướng doanh thu 6 tháng gần nhất</CardDescription>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-muted-foreground mb-1">{activity.time}</p>
-                  <Badge variant={activity.variant} className="text-[10px] px-2 py-0">{activity.badge}</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-primary/10 text-primary border-none hover:bg-primary/20">Tháng này: {formatCurrency(stats.doanhThuThang)}</Badge>
                 </div>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Breakdown Section */}
-        <div className="space-y-6">
-          <Card className="glass-card overflow-hidden">
-            <CardHeader>
-              <CardTitle className="text-lg font-heading">Trạng thái phòng</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {[
-                  { label: 'Đang thuê', value: stats.phongDangThue, color: 'bg-primary' },
-                  { label: 'Phòng trống', value: stats.phongTrong, color: 'bg-emerald-500' },
-                  { label: 'Bảo trì', value: stats.phongBaoTri, color: 'bg-amber-500' },
-                ].map((item, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="flex justify-between text-sm font-medium">
-                      <span className="text-muted-foreground">{item.label}</span>
-                      <span>{item.value}</span>
-                    </div>
-                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${item.color} transition-all duration-1000`}
-                        style={{ width: `${(item.value / stats.tongSoPhong) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <CardContent className="p-8 pt-6 h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={stats.revenueChartData}>
+                  <defs>
+                    <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tickFormatter={(value) => `${value / 1000000}M`}
+                  />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' }}
+                    formatter={(value: number) => [formatCurrency(value), 'Doanh thu']}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="total" 
+                    stroke="var(--primary)" 
+                    strokeWidth={4}
+                    fillOpacity={1} 
+                    fill="url(#colorTotal)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </CardContent>
           </Card>
-
-          {!isStaff && (
-            <Card className="glass-card bg-primary text-primary-foreground">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <TrendingUp className="w-6 h-6" />
-                  <h4 className="font-bold font-heading">Tăng trưởng 2026</h4>
+        <Card className="border-none shadow-2xl shadow-gray-200/50 bg-white dark:bg-slate-900 rounded-3xl">
+          <CardHeader className="p-8 pb-0">
+            <CardTitle className="text-2xl font-heading">Trạng thái phòng</CardTitle>
+            <CardDescription>Cơ cấu lấp đầy hiện tại</CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 pt-6">
+            <div className="h-[200px] mb-8">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={8}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="space-y-4">
+              {pieData.map((item, i) => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i] }} />
+                    <span className="text-sm font-medium text-muted-foreground">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold">{item.value}</span>
+                    <span className="text-[10px] text-muted-foreground">({((item.value / stats.tongSoPhong) * 100).toFixed(0)}%)</span>
+                  </div>
                 </div>
-                <p className="text-xs opacity-80 mb-4">Hệ thống đang hoạt động với công suất tối ưu. Tỷ lệ lấp đầy phòng tăng 5% so với quý trước.</p>
-                <Button variant="secondary" className="w-full bg-white text-primary hover:bg-white/90">Xuất báo cáo</Button>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              ))}
+            </div>
+            <div className="mt-8 pt-8 border-t border-gray-100 flex items-center justify-between">
+              <div className="text-center">
+                <p className="text-2xl font-bold">{stats.tongSoPhong}</p>
+                <p className="text-[10px] text-muted-foreground uppercase">Tổng số phòng</p>
+              </div>
+              <div className="w-px h-10 bg-gray-100" />
+              <div className="text-center">
+                <p className="text-2xl font-bold text-emerald-500">{stats.phongTrong}</p>
+                <p className="text-[10px] text-muted-foreground uppercase">Sẵn sàng</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
     </div>
   );
 }

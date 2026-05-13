@@ -54,7 +54,6 @@ export function PhongDataTable({ data, onEdit, onDelete }: PhongDataTableProps) 
   const getTrangThaiBadge = (trangThai: string) => {
     const variants = {
       trong: { variant: 'secondary' as const, label: 'Trống' },
-      daDat: { variant: 'outline' as const, label: 'Đã đặt' },
       dangThue: { variant: 'default' as const, label: 'Đang thuê' },
       baoTri: { variant: 'destructive' as const, label: 'Bảo trì' },
     };

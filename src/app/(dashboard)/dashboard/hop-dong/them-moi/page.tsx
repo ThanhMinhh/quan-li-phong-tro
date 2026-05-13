@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { useSession } from 'next-auth/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
@@ -21,7 +22,9 @@ import {
   X,
   Plus,
   Check,
-  ChevronsUpDown
+  Check,
+  ChevronsUpDown,
+  Shield
 } from 'lucide-react';
 import { HopDong, Phong, KhachThue } from '@/types';
 import { toast } from 'sonner';
@@ -99,9 +102,27 @@ export default function ThemMoiHopDongPage() {
   const [openKhachThue, setOpenKhachThue] = useState(false);
   const [openNguoiDaiDien, setOpenNguoiDaiDien] = useState(false);
 
+  const { data: session } = useSession();
+  const isStaff = session?.user?.role === 'nhanVien';
+
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (session?.user && !isStaff) {
+      fetchData();
+    }
+  }, [session, isStaff]);
+
+  if (isStaff) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <Shield className="h-16 w-16 text-rose-500 opacity-20" />
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-gray-900">Truy cập bị từ chối</h2>
+          <p className="text-gray-500">Bạn không có quyền tạo mới hợp đồng.</p>
+        </div>
+        <Button onClick={() => window.location.href = '/dashboard'}>Quay lại trang chủ</Button>
+      </div>
+    );
+  }
 
   const fetchData = async () => {
     try {
@@ -109,9 +130,9 @@ export default function ThemMoiHopDongPage() {
       const phongResponse = await fetch('/api/phong?limit=100');
       if (phongResponse.ok) {
         const phongData = await phongResponse.json();
-        // Lọc phòng trống và đã đặt
+        // Lọc phòng trống
         const availablePhong = (phongData.data || []).filter((phong: Phong) => 
-          phong.trangThai === 'trong' || phong.trangThai === 'daDat'
+          phong.trangThai === 'trong'
         );
         setPhongList(availablePhong);
       }
@@ -387,29 +408,35 @@ export default function ThemMoiHopDongPage() {
               <Label className="text-xs md:text-sm">Khách thuê</Label>
               <Popover open={openKhachThue} onOpenChange={setOpenKhachThue}>
                 <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
+                  <div
                     role="combobox"
                     aria-expanded={openKhachThue}
-                    className="w-full justify-between min-h-10 h-auto text-sm"
-                    size="sm"
+                    className="flex w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm hover:bg-accent hover:text-accent-foreground min-h-10 h-auto cursor-pointer"
                   >
-                    <div className="flex flex-wrap gap-1 text-xs md:text-sm">
+                    <div className="flex flex-wrap gap-1 text-xs md:text-sm w-full">
                       {formData.khachThueId.length === 0 ? (
                         <span className="text-muted-foreground">Chọn khách thuê...</span>
                       ) : (
                         formData.khachThueId.map((id) => {
                           const khachThue = khachThueList.find(k => k._id === id);
                           return (
-                            <Badge key={id} variant="secondary" className="mr-1">
+                            <Badge key={id} variant="secondary" className="mr-1 flex items-center gap-1 z-10">
                               {khachThue?.hoTen}
+                              <X 
+                                className="h-3 w-3 cursor-pointer hover:text-red-500 hover:bg-red-100 rounded-full transition-colors" 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  toggleKhachThue(id);
+                                }}
+                              />
                             </Badge>
                           );
                         })
                       )}
                     </div>
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
+                  </div>
                 </PopoverTrigger>
                   <PopoverContent className="w-[90vw] md:w-full p-0">
                     <Command>

@@ -10,7 +10,7 @@ export interface IPhong extends Document {
   moTa?: string;
   anhPhong: string[];
   tienNghi: string[];
-  trangThai: 'trong' | 'daDat' | 'dangThue' | 'baoTri';
+  trangThai: 'trong' | 'dangThue' | 'baoTri';
   soNguoiToiDa: number;
   ngayTao: Date;
   ngayCapNhat: Date;
@@ -69,7 +69,7 @@ const PhongSchema = new Schema<IPhong>({
   }],
   trangThai: {
     type: String,
-    enum: ['trong', 'daDat', 'dangThue', 'baoTri'],
+    enum: ['trong', 'dangThue', 'baoTri'],
     default: 'trong'
   },
   soNguoiToiDa: {

@@ -9,29 +9,12 @@ export interface IKhachThue extends Document {
   ngaySinh: Date;
   gioiTinh: 'nam' | 'nu' | 'khac';
   queQuan: string;
-  anhCCCD?: {
-    matTruoc: string;
-    matSau: string;
-  };
   ngheNghiep?: string;
   matKhau?: string;
   trangThai: 'dangThue' | 'daTraPhong' | 'chuaThue';
   ngayTao: Date;
   ngayCapNhat: Date;
 }
-
-const AnhCCCDSchema = new Schema({
-  matTruoc: {
-    type: String,
-    trim: true,
-    default: ''
-  },
-  matSau: {
-    type: String,
-    trim: true,
-    default: ''
-  }
-}, { _id: false });
 
 const KhachThueSchema = new Schema<IKhachThue>({
   hoTen: {
@@ -72,10 +55,6 @@ const KhachThueSchema = new Schema<IKhachThue>({
     required: [true, 'Quê quán là bắt buộc'],
     trim: true,
     maxlength: [200, 'Quê quán không được quá 200 ký tự']
-  },
-  anhCCCD: {
-    type: AnhCCCDSchema,
-    default: { matTruoc: '', matSau: '' }
   },
   ngheNghiep: {
     type: String,

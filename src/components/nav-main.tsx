@@ -55,6 +55,18 @@ export function NavMain({
         {items.map((item) => {
           // Khi sidebar collapsed và không phải mobile, dùng DropdownMenu
           if (state === "collapsed" && !isMobile) {
+            if (!item.items || item.items.length === 0) {
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton tooltip={item.title} asChild isActive={pathname === item.url}>
+                    <Link href={item.url}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )
+            }
             return (
               <SidebarMenuItem key={item.title}>
                 <DropdownMenu 
@@ -109,6 +121,19 @@ export function NavMain({
           }
 
           // Khi sidebar expanded hoặc mobile, dùng Collapsible
+          if (!item.items || item.items.length === 0) {
+            return (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton tooltip={item.title} asChild isActive={pathname === item.url}>
+                  <Link href={item.url}>
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          }
+
           return (
             <Collapsible
               key={item.title}
