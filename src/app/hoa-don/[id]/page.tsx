@@ -37,6 +37,14 @@ const getKhachThueName = (khachThueId: string | KhachThue) => {
   return 'N/A';
 };
 
+const getHopDongMa = (hopDongId: string | HopDong) => {
+  if (!hopDongId) return 'N/A';
+  if (typeof hopDongId === 'object' && hopDongId.maHopDong) {
+    return hopDongId.maHopDong;
+  }
+  return 'N/A';
+};
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
@@ -317,7 +325,7 @@ export default function PublicInvoicePage() {
                     <h3 className="font-semibold mb-2">Thông tin phòng</h3>
                     <p><strong>Phòng:</strong> {getPhongName(hoaDon.phong)}</p>
                     <p><strong>Khách thuê:</strong> {getKhachThueName(hoaDon.khachThue)}</p>
-                    <p><strong>Hợp đồng:</strong> N/A</p>
+                    <p><strong>Hợp đồng:</strong> {getHopDongMa(hoaDon.hopDong)}</p>
                   </div>
                   <div>
                     <h3 className="font-semibold mb-2">Thông tin thanh toán</h3>

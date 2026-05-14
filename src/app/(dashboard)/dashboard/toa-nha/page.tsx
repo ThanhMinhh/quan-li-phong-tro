@@ -178,7 +178,6 @@ export default function ToaNhaPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
         <div>
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Quản lý tòa nhà</h1>
-          <p className="text-xs md:text-sm text-gray-600">Danh sách tất cả tòa nhà trong hệ thống</p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto">
           <Button

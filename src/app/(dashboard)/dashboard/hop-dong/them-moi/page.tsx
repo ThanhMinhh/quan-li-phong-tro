@@ -22,7 +22,6 @@ import {
   X,
   Plus,
   Check,
-  Check,
   ChevronsUpDown,
   Shield
 } from 'lucide-react';

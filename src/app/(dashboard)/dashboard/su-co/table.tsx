@@ -214,26 +214,18 @@ const createColumns = (props: SuCoTableProps): ColumnDef<SuCo>[] => [
     enableHiding: false,
   },
   {
-    id: "select",
-    header: ({ table }) => (
-      <div className="flex items-center justify-center">
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Chọn tất cả"
-        />
-      </div>
-    ),
+    id: "view",
+    header: () => <div className="text-center">Xem</div>,
     cell: ({ row }) => (
       <div className="flex items-center justify-center">
-        <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Chọn hàng"
-        />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          onClick={() => props.onView?.(row.original)}
+        >
+          <Eye className="h-4 w-4" />
+        </Button>
       </div>
     ),
     enableSorting: false,
@@ -245,9 +237,6 @@ const createColumns = (props: SuCoTableProps): ColumnDef<SuCo>[] => [
     cell: ({ row }) => (
       <div className="min-w-48">
         <div className="font-medium">{row.original.tieuDe}</div>
-        <div className="text-sm text-muted-foreground truncate max-w-xs">
-          {row.original.moTa}
-        </div>
       </div>
     ),
     enableHiding: false,

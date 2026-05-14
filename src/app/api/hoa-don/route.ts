@@ -211,6 +211,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Kiểm tra quyền sở hữu (Security check)
+    if (session.user.role !== 'admin') {
+      const phongData = await Phong.findById(hopDongData.phong);
+      if (!phongData) {
+        return NextResponse.json({ message: 'Phòng không tồn tại' }, { status: 404 });
+      }
+      
+      const toaNhaData = await ToaNha.findById(phongData.toaNha);
+      if (!toaNhaData || toaNhaData.chuSoHuu.toString() !== session.user.id) {
+        return NextResponse.json(
+          { message: 'Bạn không có quyền tạo hóa đơn cho phòng này' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Tạo mã hóa đơn (sử dụng mã từ frontend hoặc tự sinh)
     let finalMaHoaDon = maHoaDon;
     

@@ -25,13 +25,13 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
   EyeIcon,
-  Users, 
+  Users,
   Phone,
   Mail,
   Calendar,
@@ -88,7 +88,7 @@ export default function KhachThuePage() {
   const fetchKhachThue = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      
+
       // Thử load từ cache trước
       if (!forceRefresh) {
         const cachedData = cache.getCache();
@@ -98,10 +98,10 @@ export default function KhachThuePage() {
           return;
         }
       }
-      
+
       const params = new URLSearchParams();
       if (selectedTrangThai && selectedTrangThai !== 'all') params.append('trangThai', selectedTrangThai);
-      
+
       const response = await fetch(`/api/khach-thue?${params.toString()}&limit=100`);
       let khachThueData: KhachThue[] = [];
       if (response.ok) {
@@ -111,7 +111,7 @@ export default function KhachThuePage() {
           setKhachThueList(khachThueData);
         }
       }
-      
+
       // Lưu cache với data mới
       if (khachThueData.length > 0) {
         cache.setCache({ khachThueList: khachThueData });
@@ -156,7 +156,7 @@ export default function KhachThuePage() {
         const response = await fetch(`/api/khach-thue/${id}`, {
           method: 'DELETE',
         });
-        
+
         if (response.ok) {
           const result = await response.json();
           if (result.success) {
@@ -198,10 +198,9 @@ export default function KhachThuePage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Quản lý khách thuê</h1>
-          <p className="text-xs md:text-sm text-gray-600">Danh sách tất cả khách thuê trong hệ thống</p>
         </div>
         <div className="flex gap-2">
-          <Button 
+          <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
@@ -219,41 +218,41 @@ export default function KhachThuePage() {
                 <span className="sm:hidden">Thêm</span>
               </Button>
             </DialogTrigger>
-          <DialogContent className="w-[95vw] md:w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingKhachThue ? 'Chỉnh sửa khách thuê' : 'Thêm khách thuê mới'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingKhachThue ? 'Cập nhật thông tin khách thuê' : 'Nhập thông tin khách thuê mới'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <KhachThueForm 
-              khachThue={editingKhachThue}
-              onClose={() => setIsDialogOpen(false)}
-              onSuccess={(newKhachThue) => {
-                cache.clearCache();
-                setIsDialogOpen(false);
-                if (newKhachThue) {
-                  if (editingKhachThue) {
-                    // Cập nhật khách thuê hiện có
-                    setKhachThueList(prev => prev.map(kt => 
-                      kt._id === editingKhachThue._id ? newKhachThue : kt
-                    ));
+            <DialogContent className="w-[95vw] md:w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingKhachThue ? 'Chỉnh sửa khách thuê' : 'Thêm khách thuê mới'}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingKhachThue ? 'Cập nhật thông tin khách thuê' : 'Nhập thông tin khách thuê mới'}
+                </DialogDescription>
+              </DialogHeader>
+
+              <KhachThueForm
+                khachThue={editingKhachThue}
+                onClose={() => setIsDialogOpen(false)}
+                onSuccess={(newKhachThue) => {
+                  cache.clearCache();
+                  setIsDialogOpen(false);
+                  if (newKhachThue) {
+                    if (editingKhachThue) {
+                      // Cập nhật khách thuê hiện có
+                      setKhachThueList(prev => prev.map(kt =>
+                        kt._id === editingKhachThue._id ? newKhachThue : kt
+                      ));
+                    } else {
+                      // Thêm khách thuê mới
+                      setKhachThueList(prev => [newKhachThue, ...prev]);
+                    }
                   } else {
-                    // Thêm khách thuê mới
-                    setKhachThueList(prev => [newKhachThue, ...prev]);
+                    // Fallback: refresh data nếu không có dữ liệu trả về
+                    fetchKhachThue();
                   }
-                } else {
-                  // Fallback: refresh data nếu không có dữ liệu trả về
-                  fetchKhachThue();
-                }
-                toast.success(editingKhachThue ? 'Cập nhật khách thuê thành công!' : 'Thêm khách thuê thành công!');
-              }}
-              isSubmitting={isFormSubmitting}
-              setIsSubmitting={setIsFormSubmitting}
-            />
+                  toast.success(editingKhachThue ? 'Cập nhật khách thuê thành công!' : 'Thêm khách thuê thành công!');
+                }}
+                isSubmitting={isFormSubmitting}
+                setIsSubmitting={setIsFormSubmitting}
+              />
             </DialogContent>
           </Dialog>
         </div>
@@ -336,7 +335,7 @@ export default function KhachThuePage() {
           <h2 className="text-lg font-semibold">Danh sách khách thuê</h2>
           <span className="text-sm text-gray-500">{filteredKhachThue.length} khách thuê</span>
         </div>
-        
+
         {/* Mobile Filters */}
         <div className="space-y-2 mb-4">
           <div className="relative">
@@ -491,13 +490,13 @@ export default function KhachThuePage() {
 }
 
 // Form component for adding/editing khach thue
-function KhachThueForm({ 
-  khachThue, 
-  onClose, 
+function KhachThueForm({
+  khachThue,
+  onClose,
   onSuccess,
   isSubmitting,
   setIsSubmitting
-}: { 
+}: {
   khachThue: KhachThue | null;
   onClose: () => void;
   onSuccess: (newKhachThue?: KhachThue) => void;
@@ -519,11 +518,11 @@ function KhachThueForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (isSubmitting) return; // Ngăn submit nhiều lần
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const url = khachThue ? `/api/khach-thue/${khachThue._id}` : '/api/khach-thue';
       const method = khachThue ? 'PUT' : 'POST';
@@ -563,120 +562,120 @@ function KhachThueForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="hoTen" className="text-xs md:text-sm">Họ tên</Label>
-              <Input
-                id="hoTen"
-                value={formData.hoTen}
-                onChange={(e) => setFormData(prev => ({ ...prev, hoTen: e.target.value }))}
-                required
-                className="text-sm"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="soDienThoai" className="text-xs md:text-sm">Số điện thoại</Label>
-              <Input
-                id="soDienThoai"
-                value={formData.soDienThoai}
-                onChange={(e) => setFormData(prev => ({ ...prev, soDienThoai: e.target.value }))}
-                required
-                className="text-sm"
-              />
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="hoTen" className="text-xs md:text-sm">Họ tên</Label>
+          <Input
+            id="hoTen"
+            value={formData.hoTen}
+            onChange={(e) => setFormData(prev => ({ ...prev, hoTen: e.target.value }))}
+            required
+            className="text-sm"
+          />
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs md:text-sm">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                className="text-sm"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="cccd" className="text-xs md:text-sm">CCCD</Label>
-              <Input
-                id="cccd"
-                value={formData.cccd}
-                onChange={(e) => setFormData(prev => ({ ...prev, cccd: e.target.value }))}
-                required
-                className="text-sm"
-              />
-            </div>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="soDienThoai" className="text-xs md:text-sm">Số điện thoại</Label>
+          <Input
+            id="soDienThoai"
+            value={formData.soDienThoai}
+            onChange={(e) => setFormData(prev => ({ ...prev, soDienThoai: e.target.value }))}
+            required
+            className="text-sm"
+          />
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="ngaySinh" className="text-xs md:text-sm">Ngày sinh</Label>
-              <Input
-                id="ngaySinh"
-                type="date"
-                value={formData.ngaySinh}
-                onChange={(e) => setFormData(prev => ({ ...prev, ngaySinh: e.target.value }))}
-                required
-                className="text-sm"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="gioiTinh" className="text-xs md:text-sm">Giới tính</Label>
-              <Select value={formData.gioiTinh} onValueChange={(value) => setFormData(prev => ({ ...prev, gioiTinh: value as 'nam' | 'nu' }))}>
-                <SelectTrigger className="text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nam" className="text-sm">Nam</SelectItem>
-                  <SelectItem value="nu" className="text-sm">Nữ</SelectItem>
-                  <SelectItem value="khac" className="text-sm">Khác</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-xs md:text-sm">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+            className="text-sm"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="queQuan" className="text-xs md:text-sm">Quê quán</Label>
-            <Input
-              id="queQuan"
-              value={formData.queQuan}
-              onChange={(e) => setFormData(prev => ({ ...prev, queQuan: e.target.value }))}
-              required
-              className="text-sm"
-            />
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="cccd" className="text-xs md:text-sm">CCCD</Label>
+          <Input
+            id="cccd"
+            value={formData.cccd}
+            onChange={(e) => setFormData(prev => ({ ...prev, cccd: e.target.value }))}
+            required
+            className="text-sm"
+          />
+        </div>
+      </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="ngheNghiep" className="text-xs md:text-sm">Nghề nghiệp</Label>
-            <Input
-              id="ngheNghiep"
-              value={formData.ngheNghiep}
-              onChange={(e) => setFormData(prev => ({ ...prev, ngheNghiep: e.target.value }))}
-              className="text-sm"
-            />
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="ngaySinh" className="text-xs md:text-sm">Ngày sinh</Label>
+          <Input
+            id="ngaySinh"
+            type="date"
+            value={formData.ngaySinh}
+            onChange={(e) => setFormData(prev => ({ ...prev, ngaySinh: e.target.value }))}
+            required
+            className="text-sm"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="matKhau" className="text-xs md:text-sm">Mật khẩu đăng nhập</Label>
-            <Input
-              id="matKhau"
-              type="password"
-              value={formData.matKhau}
-              onChange={(e) => setFormData(prev => ({ ...prev, matKhau: e.target.value }))}
-              placeholder={khachThue && khachThue.matKhau ? "Để trống nếu không muốn thay đổi" : "Nhập mật khẩu (tối thiểu 6 ký tự)"}
-              className="text-sm"
-            />
-            <p className="text-[10px] md:text-xs text-muted-foreground">
-              {khachThue && khachThue.matKhau 
-                ? "Khách thuê đã có tài khoản đăng nhập. Để trống nếu không muốn thay đổi mật khẩu."
-                : "Tạo mật khẩu để khách thuê có thể đăng nhập vào hệ thống."
-              }
-            </p>
-          </div>
+        <div className="space-y-2">
+          <Label htmlFor="gioiTinh" className="text-xs md:text-sm">Giới tính</Label>
+          <Select value={formData.gioiTinh} onValueChange={(value) => setFormData(prev => ({ ...prev, gioiTinh: value as 'nam' | 'nu' }))}>
+            <SelectTrigger className="text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="nam" className="text-sm">Nam</SelectItem>
+              <SelectItem value="nu" className="text-sm">Nữ</SelectItem>
+              <SelectItem value="khac" className="text-sm">Khác</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="queQuan" className="text-xs md:text-sm">Quê quán</Label>
+        <Input
+          id="queQuan"
+          value={formData.queQuan}
+          onChange={(e) => setFormData(prev => ({ ...prev, queQuan: e.target.value }))}
+          required
+          className="text-sm"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="ngheNghiep" className="text-xs md:text-sm">Nghề nghiệp</Label>
+        <Input
+          id="ngheNghiep"
+          value={formData.ngheNghiep}
+          onChange={(e) => setFormData(prev => ({ ...prev, ngheNghiep: e.target.value }))}
+          className="text-sm"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="matKhau" className="text-xs md:text-sm">Mật khẩu đăng nhập</Label>
+        <Input
+          id="matKhau"
+          type="password"
+          value={formData.matKhau}
+          onChange={(e) => setFormData(prev => ({ ...prev, matKhau: e.target.value }))}
+          placeholder={khachThue && khachThue.matKhau ? "Để trống nếu không muốn thay đổi" : "Nhập mật khẩu (tối thiểu 6 ký tự)"}
+          className="text-sm"
+        />
+        <p className="text-[10px] md:text-xs text-muted-foreground">
+          {khachThue && khachThue.matKhau
+            ? "Khách thuê đã có tài khoản đăng nhập. Để trống nếu không muốn thay đổi mật khẩu."
+            : "Tạo mật khẩu để khách thuê có thể đăng nhập vào hệ thống."
+          }
+        </p>
+      </div>
 
 
       <DialogFooter className="flex-col sm:flex-row gap-2">

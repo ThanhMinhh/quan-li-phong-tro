@@ -32,12 +32,12 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  AlertTriangle, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  AlertTriangle,
   Calendar,
   Users,
   Eye,
@@ -61,7 +61,7 @@ export default function SuCoPage() {
     khachThueList: KhachThue[];
     hopDongList: HopDong[];
   }>({ key: 'su-co-data', duration: 300000 });
-  
+
   const [suCoList, setSuCoList] = useState<SuCo[]>([]);
   const [phongList, setPhongList] = useState<Phong[]>([]);
   const [khachThueList, setKhachThueList] = useState<KhachThue[]>([]);
@@ -73,6 +73,8 @@ export default function SuCoPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSuCo, setEditingSuCo] = useState<SuCo | null>(null);
+  const [viewingSuCo, setViewingSuCo] = useState<SuCo | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   useEffect(() => {
     document.title = 'Quản lý Sự cố';
@@ -85,7 +87,7 @@ export default function SuCoPage() {
   const fetchData = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      
+
       if (!forceRefresh) {
         const cachedData = cache.getCache();
         if (cachedData) {
@@ -97,7 +99,7 @@ export default function SuCoPage() {
           return;
         }
       }
-      
+
       // Fetch sự cố từ API
       const suCoResponse = await fetch('/api/su-co?limit=1000');
       const suCoData = await suCoResponse.json();
@@ -121,7 +123,7 @@ export default function SuCoPage() {
       const hopDongData = await hopDongResponse.json();
       const hopDongs = hopDongData.success ? hopDongData.data : [];
       setHopDongList(hopDongs);
-      
+
       cache.setCache({
         suCoList: suCos,
         phongList: phongs,
@@ -148,11 +150,11 @@ export default function SuCoPage() {
 
   const filteredSuCo = suCoList.filter(suCo => {
     const matchesSearch = suCo.tieuDe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         suCo.moTa.toLowerCase().includes(searchTerm.toLowerCase());
+      suCo.moTa.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || suCo.trangThai === statusFilter;
     const matchesType = typeFilter === 'all' || suCo.loaiSuCo === typeFilter;
     const matchesPriority = priorityFilter === 'all' || suCo.mucDoUuTien === priorityFilter;
-    
+
     return matchesSearch && matchesStatus && matchesType && matchesPriority;
   });
 
@@ -222,6 +224,11 @@ export default function SuCoPage() {
   const handleEdit = (suCo: SuCo) => {
     setEditingSuCo(suCo);
     setIsDialogOpen(true);
+  };
+
+  const handleView = (suCo: SuCo) => {
+    setViewingSuCo(suCo);
+    setIsViewDialogOpen(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -296,10 +303,10 @@ export default function SuCoPage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Quản lý sự cố</h1>
-          <p className="text-xs md:text-sm text-gray-600">Theo dõi và xử lý các sự cố từ khách thuê</p>
+
         </div>
         <div className="flex gap-2">
-          <Button 
+          <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
@@ -317,31 +324,126 @@ export default function SuCoPage() {
                 <span className="sm:hidden">Báo cáo</span>
               </Button>
             </DialogTrigger>
-          <DialogContent className="w-[95vw] md:w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingSuCo ? 'Chỉnh sửa sự cố' : 'Báo cáo sự cố mới'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingSuCo ? 'Cập nhật thông tin sự cố' : 'Nhập thông tin sự cố mới'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <SuCoForm 
-              suCo={editingSuCo}
-              phongList={phongList}
-              khachThueList={khachThueList}
-              hopDongList={hopDongList}
-              getKhachThueName={getKhachThueName}
-              onClose={() => setIsDialogOpen(false)}
-              onSuccess={() => {
-                cache.clearCache();
-                setIsDialogOpen(false);
-                fetchData(true);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
+            <DialogContent className="w-[95vw] md:w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingSuCo ? 'Chỉnh sửa sự cố' : 'Báo cáo sự cố mới'}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingSuCo ? 'Cập nhật thông tin sự cố' : 'Nhập thông tin sự cố mới'}
+                </DialogDescription>
+              </DialogHeader>
+
+              <SuCoForm
+                suCo={editingSuCo}
+                phongList={phongList}
+                khachThueList={khachThueList}
+                hopDongList={hopDongList}
+                getKhachThueName={getKhachThueName}
+                onClose={() => setIsDialogOpen(false)}
+                onSuccess={() => {
+                  cache.clearCache();
+                  setIsDialogOpen(false);
+                  fetchData(true);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+            <DialogContent className="w-[95vw] md:w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-xl md:text-2xl font-bold">Chi tiết sự cố</DialogTitle>
+                <DialogDescription>
+                </DialogDescription>
+              </DialogHeader>
+
+              {viewingSuCo && (
+                <div className="space-y-6 py-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500 uppercase">Mã sự cố / Tiêu đề</Label>
+                      <p className="font-semibold text-lg">{viewingSuCo.tieuDe}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500 uppercase">Trạng thái</Label>
+                      <div>{getStatusBadge(viewingSuCo.trangThai)}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500 uppercase">Phòng</Label>
+                      <p className="font-medium flex items-center gap-2">
+                        <Home className="h-4 w-4 text-gray-400" />
+                        {getPhongName(viewingSuCo.phong)}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500 uppercase">Khách thuê</Label>
+                      <p className="font-medium flex items-center gap-2">
+                        <Users className="h-4 w-4 text-gray-400" />
+                        {getKhachThueName(viewingSuCo.khachThue)}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500 uppercase">Ngày báo cáo</Label>
+                      <p className="font-medium flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                        {new Date(viewingSuCo.ngayBaoCao).toLocaleDateString('vi-VN')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500 uppercase">Loại sự cố</Label>
+                      <div>{getTypeBadge(viewingSuCo.loaiSuCo)}</div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500 uppercase">Mức độ ưu tiên</Label>
+                      <div>{getPriorityBadge(viewingSuCo.mucDoUuTien)}</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs text-gray-500 uppercase">Mô tả chi tiết</Label>
+                    <div className="p-3 bg-gray-50 rounded-lg border text-sm whitespace-pre-wrap min-h-[100px]">
+                      {viewingSuCo.moTa}
+                    </div>
+                  </div>
+
+                  {viewingSuCo.anhSuCo && viewingSuCo.anhSuCo.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-gray-500 uppercase">Hình ảnh minh họa</Label>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {viewingSuCo.anhSuCo.map((img, idx) => (
+                          <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border">
+                            <img src={img} alt={`Sự cố ${idx + 1}`} className="object-cover w-full h-full hover:scale-110 transition-transform duration-300" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {viewingSuCo.ghiChuXuLy && (
+                    <div className="space-y-2 border-t pt-4">
+                      <Label className="text-xs text-red-500 font-bold uppercase">Ghi chú từ quản lý</Label>
+                      <div className="p-3 bg-red-50 rounded-lg border border-red-100 text-sm text-red-900 italic">
+                        {viewingSuCo.ghiChuXuLy}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end pt-4 border-t">
+                    <Button onClick={() => setIsViewDialogOpen(false)} variant="secondary">
+                      Đóng
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -407,6 +509,7 @@ export default function SuCoPage() {
             data={filteredSuCo}
             phongList={phongList}
             khachThueList={khachThueList}
+            onView={handleView}
             onEdit={handleEdit}
             onDelete={handleDelete}
             onStatusChange={handleStatusChange}
@@ -428,7 +531,7 @@ export default function SuCoPage() {
           <h2 className="text-lg font-semibold">Danh sách sự cố</h2>
           <span className="text-sm text-gray-500">{filteredSuCo.length} sự cố</span>
         </div>
-        
+
         {/* Mobile Filters */}
         <div className="space-y-2 mb-4">
           <div className="relative">
@@ -486,7 +589,7 @@ export default function SuCoPage() {
           {filteredSuCo.map((suCo) => {
             const phongInfo = typeof suCo.phong === 'object' ? suCo.phong : phongList.find(p => p._id === suCo.phong);
             const khachThueInfo = typeof suCo.nguoiBaoCao === 'object' ? suCo.nguoiBaoCao : khachThueList.find(k => k._id === suCo.nguoiBaoCao);
-            
+
             return (
               <Card key={suCo._id} className="p-4">
                 <div className="space-y-3">
@@ -525,14 +628,17 @@ export default function SuCoPage() {
                     </div>
                   </div>
 
-                  {/* Description */}
-                  <div className="border-t pt-2">
-                    <p className="text-xs text-gray-600 line-clamp-2">{suCo.moTa}</p>
-                  </div>
-
                   {/* Action buttons */}
                   <div className="flex justify-between items-center pt-2 border-t">
                     <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleView(suCo)}
+                        className="text-blue-600"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
@@ -568,15 +674,15 @@ export default function SuCoPage() {
 }
 
 // Form component for adding/editing su co
-function SuCoForm({ 
-  suCo, 
+function SuCoForm({
+  suCo,
   phongList,
   khachThueList,
   hopDongList,
   getKhachThueName,
-  onClose, 
-  onSuccess 
-}: { 
+  onClose,
+  onSuccess
+}: {
   suCo: SuCo | null;
   phongList: Phong[];
   khachThueList: KhachThue[];
@@ -603,18 +709,18 @@ function SuCoForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation: phải chọn phòng và có khách thuê
     if (!formData.phong) {
       toast.error('Vui lòng chọn phòng');
       return;
     }
-    
+
     if (!formData.khachThue) {
       toast.error('Không tìm thấy khách thuê cho phòng này. Vui lòng kiểm tra hợp đồng.');
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       // Prepare data for API
@@ -655,18 +761,18 @@ function SuCoForm({
 
   const handlePhongChange = async (phongId: string) => {
     setFormData(prev => ({ ...prev, phong: phongId }));
-    
+
     // Tìm thông tin phòng được chọn
     const phong = phongList.find(p => p._id === phongId);
     setSelectedPhong(phong);
-    
+
     if (phong) {
       // Tìm hợp đồng đang hoạt động cho phòng này
       const hopDongHoatDong = hopDongList.find(hd => {
         const hdPhongId = typeof hd.phong === 'object' ? hd.phong._id : hd.phong;
         return hdPhongId === phongId && hd.trangThai === 'hoatDong';
       });
-      
+
       if (hopDongHoatDong && hopDongHoatDong.nguoiDaiDien) {
         // Lấy người đại diện làm khách thuê chính
         setFormData(prev => ({ ...prev, khachThue: hopDongHoatDong.nguoiDaiDien._id || hopDongHoatDong.nguoiDaiDien }));
@@ -695,7 +801,7 @@ function SuCoForm({
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="khachThue" className="text-xs md:text-sm">Khách thuê</Label>
           {formData.khachThue ? (
@@ -761,7 +867,7 @@ function SuCoForm({
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="mucDoUuTien" className="text-xs md:text-sm">Mức độ ưu tiên</Label>
           <Select value={formData.mucDoUuTien} onValueChange={(value) => setFormData(prev => ({ ...prev, mucDoUuTien: value as any }))}>

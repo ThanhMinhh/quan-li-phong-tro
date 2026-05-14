@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { tieuDe, moTa, mucDo, loaiSuCo } = body;
+    const { tieuDe, moTa, mucDoUuTien, loaiSuCo } = body;
 
     await dbConnect();
 
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       tieuDe,
       moTa,
       loaiSuCo: loaiSuCo || 'khac',
-      mucDoUuTien: mucDo || 'trungBinh',
+      mucDoUuTien: mucDoUuTien || 'trungBinh',
       phong: hopDong.phong,
       khachThue: decoded.id,
       trangThai: 'moi',

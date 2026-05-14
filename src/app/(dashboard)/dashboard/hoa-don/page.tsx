@@ -26,10 +26,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  Plus, 
-  Search, 
-  Receipt, 
+import {
+  Plus,
+  Search,
+  Receipt,
   AlertCircle,
   Zap,
   Download,
@@ -92,7 +92,7 @@ export default function HoaDonPage() {
     khachThueList: KhachThue[];
     toaNhaList: ToaNha[];
   }>({ key: 'hoa-don-data', duration: 300000 }); // 5 phút
-  
+
   const [hoaDonList, setHoaDonList] = useState<HoaDon[]>([]);
   const [hopDongList, setHopDongList] = useState<HopDong[]>([]);
   const [phongList, setPhongList] = useState<Phong[]>([]);
@@ -127,7 +127,7 @@ export default function HoaDonPage() {
   const fetchData = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      
+
       // Thử load từ cache trước (nếu không force refresh)
       if (!forceRefresh) {
         const cachedData = cache.getCache();
@@ -141,7 +141,7 @@ export default function HoaDonPage() {
           return;
         }
       }
-      
+
       // Fetch hóa đơn từ API
       const hoaDonResponse = await fetch('/api/hoa-don?limit=1000');
       const hoaDonData = hoaDonResponse.ok ? await hoaDonResponse.json() : { data: [] };
@@ -156,14 +156,14 @@ export default function HoaDonPage() {
         const hopDongs = formData.data.hopDongList || [];
         const phongs = formData.data.phongList || [];
         const khachThues = formData.data.khachThueList || [];
-        
+
         const toaNhas = formData.data.toaNhaList || [];
-        
+
         setHopDongList(hopDongs);
         setPhongList(phongs);
         setKhachThueList(khachThues);
         setToaNhaList(toaNhas);
-        
+
         // Lưu vào cache
         cache.setCache({
           hoaDonList: hoaDons,
@@ -191,11 +191,11 @@ export default function HoaDonPage() {
 
   const filteredHoaDon = hoaDonList.filter(hoaDon => {
     const matchesSearch = hoaDon.maHoaDon.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         hoaDon.ghiChu?.toLowerCase().includes(searchTerm.toLowerCase());
+      hoaDon.ghiChu?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || hoaDon.trangThai === statusFilter;
     const matchesMonth = monthFilter === 'all' || hoaDon.thang.toString() === monthFilter;
     const matchesYear = yearFilter === 'all' || hoaDon.nam.toString() === yearFilter;
-    
+
     // Lọc theo tòa nhà (client-side hoặc fetch lại tùy logic, ở đây làm client-side cho mượt)
     let matchesToaNha = true;
     if (toaNhaFilter !== 'all') {
@@ -205,7 +205,7 @@ export default function HoaDonPage() {
       });
       matchesToaNha = phong?.toaNha === toaNhaFilter;
     }
-    
+
     return matchesSearch && matchesStatus && matchesMonth && matchesYear && matchesToaNha;
   });
 
@@ -258,16 +258,16 @@ export default function HoaDonPage() {
 
   const handleDeleteMultiple = async (ids: string[]) => {
     if (ids.length === 0) return;
-    
+
     try {
       // Xóa từng hóa đơn (có thể cải thiện bằng batch delete API)
-      const deletePromises = ids.map(id => 
+      const deletePromises = ids.map(id =>
         fetch(`/api/hoa-don?id=${id}`, { method: 'DELETE' })
       );
-      
+
       const results = await Promise.all(deletePromises);
       const failedDeletes = results.filter(result => !result.ok);
-      
+
       if (failedDeletes.length === 0) {
         cache.clearCache();
         setHoaDonList(prev => prev.filter(hoaDon => !ids.includes(hoaDon._id!)));
@@ -293,7 +293,7 @@ export default function HoaDonPage() {
 
   const handleCopyLink = (hoaDon: HoaDon) => {
     const publicUrl = `${window.location.origin}/hoa-don/${hoaDon._id}`;
-    
+
     navigator.clipboard.writeText(publicUrl).then(() => {
       toast.success('Đã sao chép link hóa đơn vào clipboard!');
     }).catch(() => {
@@ -377,14 +377,14 @@ export default function HoaDonPage() {
         </div>
         
         <div class="footer">
-          <p>Trạng thái: ${hoaDon.trangThai === 'daThanhToan' ? 'Đã thanh toán' : 
-                         hoaDon.trangThai === 'quaHan' ? 'Quá hạn' : 'Chưa thanh toán'}</p>
+          <p>Trạng thái: ${hoaDon.trangThai === 'daThanhToan' ? 'Đã thanh toán' :
+        hoaDon.trangThai === 'quaHan' ? 'Quá hạn' : 'Chưa thanh toán'}</p>
           ${hoaDon.ghiChu ? `<p>Ghi chú: ${hoaDon.ghiChu}</p>` : ''}
         </div>
       </body>
       </html>
     `;
-    
+
     const blob = new Blob([invoiceHtml], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -437,8 +437,8 @@ export default function HoaDonPage() {
                   font-size: 12px; 
                   font-weight: bold;
                 ">
-                  ${hoaDon.trangThai === 'daThanhToan' ? 'Đã thanh toán' : 
-                    hoaDon.trangThai === 'quaHan' ? 'Quá hạn' : 'Chưa thanh toán'}
+                  ${hoaDon.trangThai === 'daThanhToan' ? 'Đã thanh toán' :
+          hoaDon.trangThai === 'quaHan' ? 'Quá hạn' : 'Chưa thanh toán'}
                 </span>
               </div>
             </div>
@@ -489,7 +489,7 @@ export default function HoaDonPage() {
           </div>
         </div>
       `;
-      
+
       tempElement.style.position = 'absolute';
       tempElement.style.left = '-9999px';
       tempElement.style.top = '-9999px';
@@ -584,10 +584,9 @@ export default function HoaDonPage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Quản lý hóa đơn</h1>
-          <p className="text-xs md:text-sm text-gray-600">Danh sách tất cả hóa đơn trong hệ thống</p>
         </div>
         <div className="flex gap-2">
-          <Button 
+          <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
@@ -699,7 +698,7 @@ export default function HoaDonPage() {
           <h2 className="text-lg font-semibold">Danh sách hóa đơn</h2>
           <span className="text-sm text-gray-500">{filteredHoaDon.length} hóa đơn</span>
         </div>
-        
+
         {/* Mobile Filters */}
         <div className="space-y-2 mb-4">
           <div className="relative">
@@ -768,7 +767,7 @@ export default function HoaDonPage() {
         <div className="space-y-3">
           {filteredHoaDon.map((hoaDon) => {
             const isOverdue = new Date(hoaDon.hanThanhToan) < new Date() && hoaDon.trangThai !== 'daThanhToan';
-            
+
             return (
               <Card key={hoaDon._id} className="p-4">
                 <div className="space-y-3">
@@ -870,7 +869,7 @@ export default function HoaDonPage() {
               Thông tin chi tiết hóa đơn {viewingHoaDon?.maHoaDon}
             </DialogDescription>
           </DialogHeader>
-          
+
           {viewingHoaDon && (
             <div className="space-y-4 md:space-y-6">
               {/* Invoice Header */}
@@ -1010,16 +1009,16 @@ export default function HoaDonPage() {
               Tạo thanh toán cho hóa đơn {paymentHoaDon?.maHoaDon}
             </DialogDescription>
           </DialogHeader>
-          
+
           {paymentHoaDon && (
-            <PaymentForm 
+            <PaymentForm
               hoaDon={paymentHoaDon}
               onClose={() => setIsPaymentDialogOpen(false)}
               onSuccess={(updatedHoaDon) => {
                 setIsPaymentDialogOpen(false);
                 // Chỉ update dòng hóa đơn đó thay vì load lại toàn bộ
                 if (updatedHoaDon) {
-                  setHoaDonList(prev => prev.map(hd => 
+                  setHoaDonList(prev => prev.map(hd =>
                     hd._id === updatedHoaDon._id ? updatedHoaDon : hd
                   ));
                   cache.clearCache(); // Xóa cache để lần sau load mới
@@ -1034,11 +1033,11 @@ export default function HoaDonPage() {
 }
 
 // Payment Form Component
-function PaymentForm({ 
-  hoaDon, 
-  onClose, 
-  onSuccess 
-}: { 
+function PaymentForm({
+  hoaDon,
+  onClose,
+  onSuccess
+}: {
   hoaDon: HoaDon;
   onClose: () => void;
   onSuccess: (updatedHoaDon?: HoaDon) => void;
@@ -1057,7 +1056,7 @@ function PaymentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    
+
     try {
       const requestData = {
         ...hoaDon,
@@ -1067,7 +1066,7 @@ function PaymentForm({
         ngayThanhToan: formData.ngayThanhToan,
         phuongThucThanhToan: 'chuyenKhoan',
       };
-      
+
       const response = await fetch('/api/hoa-don', {
         method: 'PUT',
         headers: {
@@ -1172,8 +1171,8 @@ function PaymentForm({
 
 
         <DialogFooter className="flex-col sm:flex-row gap-2 pt-4 md:pt-6 border-t">
-          <Button 
-            type="button" 
+          <Button
+            type="button"
             variant="outline"
             size="sm"
             onClick={onClose}
@@ -1182,7 +1181,7 @@ function PaymentForm({
           >
             Hủy
           </Button>
-          <Button 
+          <Button
             type="submit"
             size="sm"
             disabled={submitting}

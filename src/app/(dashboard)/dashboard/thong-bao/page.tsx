@@ -31,12 +31,12 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Plus, 
-  Search, 
-  Edit, 
-  Trash2, 
-  Bell, 
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Bell,
   Calendar,
   Users,
   Eye,
@@ -57,7 +57,7 @@ export default function ThongBaoPage() {
     phongList: Phong[];
     khachThueList: KhachThue[];
   }>({ key: 'thong-bao-data', duration: 300000 });
-  
+
   const [thongBaoList, setThongBaoList] = useState<ThongBao[]>([]);
   const [toaNhaList, setToaNhaList] = useState<ToaNha[]>([]);
   const [phongList, setPhongList] = useState<Phong[]>([]);
@@ -80,7 +80,7 @@ export default function ThongBaoPage() {
   const fetchData = async (forceRefresh = false) => {
     try {
       setLoading(true);
-      
+
       if (!forceRefresh) {
         const cachedData = cache.getCache();
         if (cachedData) {
@@ -92,7 +92,7 @@ export default function ThongBaoPage() {
           return;
         }
       }
-      
+
       // Fetch thông báo từ API
       const thongBaoResponse = await fetch('/api/thong-bao?limit=1000');
       const thongBaoData = thongBaoResponse.ok ? await thongBaoResponse.json() : { data: [] };
@@ -116,7 +116,7 @@ export default function ThongBaoPage() {
       const khachThueData = khachThueResponse.ok ? await khachThueResponse.json() : { data: [] };
       const khachThues = khachThueData.success ? khachThueData.data : [];
       setKhachThueList(khachThues);
-      
+
       cache.setCache({
         thongBaoList: thongBaos,
         toaNhaList: toaNhas,
@@ -143,9 +143,9 @@ export default function ThongBaoPage() {
 
   const filteredThongBao = thongBaoList.filter(thongBao => {
     const matchesSearch = thongBao.tieuDe.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         thongBao.noiDung.toLowerCase().includes(searchTerm.toLowerCase());
+      thongBao.noiDung.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === 'all' || thongBao.loai === typeFilter;
-    
+
     return matchesSearch && matchesType;
   });
 
@@ -240,10 +240,9 @@ export default function ThongBaoPage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
         <div>
           <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900">Quản lý thông báo</h1>
-          <p className="text-xs md:text-sm text-gray-600">Gửi và quản lý thông báo đến khách thuê</p>
         </div>
         <div className="flex gap-2">
-          <Button 
+          <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
@@ -261,55 +260,55 @@ export default function ThongBaoPage() {
                 <span className="sm:hidden">Tạo</span>
               </Button>
             </DialogTrigger>
-          <DialogContent className="w-[95vw] md:w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingThongBao ? 'Chỉnh sửa thông báo' : 'Tạo thông báo mới'}
-              </DialogTitle>
-              <DialogDescription>
-                {editingThongBao ? 'Cập nhật thông tin thông báo' : 'Nhập thông tin thông báo mới'}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <ThongBaoForm 
-              thongBao={editingThongBao}
-              toaNhaList={toaNhaList}
-              phongList={phongList}
-              khachThueList={khachThueList}
-              onClose={() => setIsDialogOpen(false)}
-              onSuccess={() => {
-                cache.clearCache();
-                setIsDialogOpen(false);
-                fetchData(true);
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-        <Dialog open={!!viewingThongBao} onOpenChange={(open) => !open && setViewingThongBao(null)}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>{viewingThongBao?.tieuDe}</DialogTitle>
-              <DialogDescription>
-                {viewingThongBao?.ngayGui && new Date(viewingThongBao.ngayGui).toLocaleDateString('vi-VN')}
-                {' - '}
-                {viewingThongBao && getToaNhaName(viewingThongBao.toaNha)}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <div className="mb-4">
-                <Badge variant="outline" className="mb-2">
-                  {viewingThongBao && getTypeBadge(viewingThongBao.loai).props.children}
-                </Badge>
+            <DialogContent className="w-[95vw] md:w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingThongBao ? 'Chỉnh sửa thông báo' : 'Tạo thông báo mới'}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingThongBao ? 'Cập nhật thông tin thông báo' : 'Nhập thông tin thông báo mới'}
+                </DialogDescription>
+              </DialogHeader>
+
+              <ThongBaoForm
+                thongBao={editingThongBao}
+                toaNhaList={toaNhaList}
+                phongList={phongList}
+                khachThueList={khachThueList}
+                onClose={() => setIsDialogOpen(false)}
+                onSuccess={() => {
+                  cache.clearCache();
+                  setIsDialogOpen(false);
+                  fetchData(true);
+                }}
+              />
+            </DialogContent>
+          </Dialog>
+          <Dialog open={!!viewingThongBao} onOpenChange={(open) => !open && setViewingThongBao(null)}>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>{viewingThongBao?.tieuDe}</DialogTitle>
+                <DialogDescription>
+                  {viewingThongBao?.ngayGui && new Date(viewingThongBao.ngayGui).toLocaleDateString('vi-VN')}
+                  {' - '}
+                  {viewingThongBao && getToaNhaName(viewingThongBao.toaNha)}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="py-4">
+                <div className="mb-4">
+                  <Badge variant="outline" className="mb-2">
+                    {viewingThongBao && getTypeBadge(viewingThongBao.loai).props.children}
+                  </Badge>
+                </div>
+                <div className="text-sm whitespace-pre-wrap text-gray-700">
+                  {viewingThongBao?.noiDung}
+                </div>
               </div>
-              <div className="text-sm whitespace-pre-wrap text-gray-700">
-                {viewingThongBao?.noiDung}
-              </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={() => setViewingThongBao(null)}>Đóng</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button onClick={() => setViewingThongBao(null)}>Đóng</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -418,9 +417,6 @@ export default function ThongBaoPage() {
                     <TableCell className="font-medium">
                       <div>
                         <div className="font-medium">{thongBao.tieuDe}</div>
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
-                          {thongBao.noiDung}
-                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{getTypeBadge(thongBao.loai)}</TableCell>
@@ -442,22 +438,22 @@ export default function ThongBaoPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => setViewingThongBao(thongBao)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleEdit(thongBao)}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleDelete(thongBao._id!)}
                           className="text-red-600 hover:text-red-700"
@@ -480,7 +476,7 @@ export default function ThongBaoPage() {
           <h2 className="text-lg font-semibold">Danh sách thông báo</h2>
           <span className="text-sm text-gray-500">{filteredThongBao.length} thông báo</span>
         </div>
-        
+
         {/* Mobile Filters */}
         <div className="space-y-2 mb-4">
           <div className="relative">
@@ -527,10 +523,7 @@ export default function ThongBaoPage() {
                     {getTypeBadge(thongBao.loai)}
                   </div>
 
-                  {/* Content */}
-                  <div className="border-t pt-2">
-                    <p className="text-xs text-gray-600 line-clamp-3">{thongBao.noiDung}</p>
-                  </div>
+
 
                   {/* Recipients info */}
                   <div className="space-y-1 text-xs border-t pt-2">
@@ -590,14 +583,14 @@ export default function ThongBaoPage() {
 }
 
 // Form component for adding/editing thong bao
-function ThongBaoForm({ 
-  thongBao, 
+function ThongBaoForm({
+  thongBao,
   toaNhaList,
   phongList,
   khachThueList,
-  onClose, 
-  onSuccess 
-}: { 
+  onClose,
+  onSuccess
+}: {
   thongBao: ThongBao | null;
   toaNhaList: ToaNha[];
   phongList: Phong[];
@@ -616,10 +609,10 @@ function ThongBaoForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
-      const url = thongBao 
-        ? `/api/thong-bao?id=${thongBao._id}` 
+      const url = thongBao
+        ? `/api/thong-bao?id=${thongBao._id}`
         : '/api/thong-bao';
       const method = thongBao ? 'PUT' : 'POST';
 
@@ -648,7 +641,7 @@ function ThongBaoForm({
   const handleNguoiNhanChange = (khachThueId: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      nguoiNhan: checked 
+      nguoiNhan: checked
         ? [...prev.nguoiNhan, khachThueId]
         : prev.nguoiNhan.filter(id => id !== khachThueId)
     }));
@@ -657,7 +650,7 @@ function ThongBaoForm({
   const handlePhongChange = (phongId: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
-      phong: checked 
+      phong: checked
         ? [...prev.phong, phongId]
         : prev.phong.filter(id => id !== phongId)
     }));
