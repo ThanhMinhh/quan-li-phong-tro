@@ -37,7 +37,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Tạo navigation items dựa trên role
   const navMain = React.useMemo(() => {
     const role = session?.user?.role;
-    
+
     const items = [];
 
     // Quản lý cơ bản - Ẩn đối với nhân viên
@@ -127,7 +127,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Building2 className="size-6" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight ml-2">
-                  <span className="truncate font-bold text-lg font-heading tracking-tight">Smart Management</span>
+                  <span className="truncate font-bold text-lg font-heading tracking-tight">Room Management</span>
                   <span className="truncate text-[10px] uppercase tracking-widest text-muted-foreground"></span>
                 </div>
               </a>
