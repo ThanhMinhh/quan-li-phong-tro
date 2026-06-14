@@ -18,7 +18,7 @@ const updateSuCoSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -30,9 +30,10 @@ export async function GET(
       );
     }
 
+    const { id } = await params;
     await dbConnect();
 
-    const suCo = await SuCo.findById(params.id)
+    const suCo = await SuCo.findById(id)
       .populate('phong', 'maPhong toaNha')
       .populate('khachThue', 'hoTen soDienThoai')
       .populate('nguoiXuLy', 'ten email');
@@ -60,7 +61,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -72,13 +73,14 @@ export async function PUT(
       );
     }
 
+    const { id } = await params;
     const body = await request.json();
     const validatedData = updateSuCoSchema.parse(body);
 
     await dbConnect();
 
     const suCo = await SuCo.findByIdAndUpdate(
-      params.id,
+      id,
       validatedData,
       { new: true, runValidators: true }
     ).populate('phong', 'maPhong toaNha')
@@ -116,7 +118,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -128,9 +130,10 @@ export async function DELETE(
       );
     }
 
+    const { id } = await params;
     await dbConnect();
 
-    const suCo = await SuCo.findById(params.id);
+    const suCo = await SuCo.findById(id);
     if (!suCo) {
       return NextResponse.json(
         { message: 'Sự cố không tồn tại' },
@@ -138,7 +141,7 @@ export async function DELETE(
       );
     }
 
-    await SuCo.findByIdAndDelete(params.id);
+    await SuCo.findByIdAndDelete(id);
 
     return NextResponse.json({
       success: true,

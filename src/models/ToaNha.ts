@@ -21,7 +21,6 @@ export interface IToaNha extends Document {
 const DiaChiSchema = new Schema({
   soNha: {
     type: String,
-    required: [true, 'Số nhà là bắt buộc'],
     trim: true
   },
   duong: {
@@ -36,7 +35,6 @@ const DiaChiSchema = new Schema({
   },
   quan: {
     type: String,
-    required: [true, 'Quận/huyện là bắt buộc'],
     trim: true
   },
   thanhPho: {

@@ -568,7 +568,7 @@ function KhachThueForm({
           <Input
             id="hoTen"
             value={formData.hoTen}
-            onChange={(e) => setFormData(prev => ({ ...prev, hoTen: e.target.value }))}
+            onChange={(e) => setFormData(prev => ({ ...prev, hoTen: e.target.value.replace(/[0-9]/g, '') }))}
             required
             className="text-sm"
           />
@@ -579,7 +579,7 @@ function KhachThueForm({
           <Input
             id="soDienThoai"
             value={formData.soDienThoai}
-            onChange={(e) => setFormData(prev => ({ ...prev, soDienThoai: e.target.value }))}
+            onChange={(e) => setFormData(prev => ({ ...prev, soDienThoai: e.target.value.replace(/[^0-9]/g, '') }))}
             required
             className="text-sm"
           />
@@ -603,7 +603,7 @@ function KhachThueForm({
           <Input
             id="cccd"
             value={formData.cccd}
-            onChange={(e) => setFormData(prev => ({ ...prev, cccd: e.target.value }))}
+            onChange={(e) => setFormData(prev => ({ ...prev, cccd: e.target.value.replace(/[^0-9]/g, '') }))}
             required
             className="text-sm"
           />

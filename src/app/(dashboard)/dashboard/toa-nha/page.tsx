@@ -157,7 +157,13 @@ export default function ToaNhaPage() {
   };
 
   const formatAddress = (diaChi: ToaNha['diaChi']) => {
-    return `${diaChi.soNha} ${diaChi.duong}, ${diaChi.phuong}, ${diaChi.quan}, ${diaChi.thanhPho}`;
+    const parts = [];
+    const mainAddress = `${diaChi.soNha || ''} ${diaChi.duong || ''}`.trim();
+    if (mainAddress) parts.push(mainAddress);
+    if (diaChi.phuong) parts.push(diaChi.phuong);
+    if (diaChi.quan) parts.push(diaChi.quan);
+    if (diaChi.thanhPho) parts.push(diaChi.thanhPho);
+    return parts.join(', ');
   };
 
   if (loading) {
@@ -528,52 +534,26 @@ function ToaNhaForm({
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="soNha" className="text-sm">Số nhà</Label>
-          <Input
-            id="soNha"
-            value={formData.soNha}
-            onChange={(e) => setFormData(prev => ({ ...prev, soNha: e.target.value }))}
-            required
-            className="text-sm"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="duong" className="text-sm">Tên đường</Label>
-          <Input
-            id="duong"
-            value={formData.duong}
-            onChange={(e) => setFormData(prev => ({ ...prev, duong: e.target.value }))}
-            required
-            className="text-sm"
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="duong" className="text-sm">Địa chỉ chi tiết ()</Label>
+        <Input
+          id="duong"
+          value={formData.duong}
+          onChange={(e) => setFormData(prev => ({ ...prev, duong: e.target.value }))}
+          required
+          className="text-sm"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="phuong" className="text-sm">Phường/Xã</Label>
-          <Input
-            id="phuong"
-            value={formData.phuong}
-            onChange={(e) => setFormData(prev => ({ ...prev, phuong: e.target.value }))}
-            required
-            className="text-sm"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="quan" className="text-sm">Quận/Huyện</Label>
-          <Input
-            id="quan"
-            value={formData.quan}
-            onChange={(e) => setFormData(prev => ({ ...prev, quan: e.target.value }))}
-            required
-            className="text-sm"
-          />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="phuong" className="text-sm">Phường/Xã</Label>
+        <Input
+          id="phuong"
+          value={formData.phuong}
+          onChange={(e) => setFormData(prev => ({ ...prev, phuong: e.target.value }))}
+          required
+          className="text-sm"
+        />
       </div>
 
       <div className="space-y-2">

@@ -14,10 +14,10 @@ const toaNghiEnum = z.enum(['wifi', 'camera', 'baoVe', 'giuXe', 'thangMay', 'san
 const toaNhaSchema = z.object({
   tenToaNha: z.string().min(1, 'Tên tòa nhà là bắt buộc'),
   diaChi: z.object({
-    soNha: z.string().min(1, 'Số nhà là bắt buộc'),
-    duong: z.string().min(1, 'Tên đường là bắt buộc'),
+    soNha: z.string().optional(),
+    duong: z.string().min(1, 'Địa chỉ chi tiết là bắt buộc'),
     phuong: z.string().min(1, 'Phường/xã là bắt buộc'),
-    quan: z.string().min(1, 'Quận/huyện là bắt buộc'),
+    quan: z.string().optional(),
     thanhPho: z.string().min(1, 'Thành phố là bắt buộc'),
   }),
   moTa: z.string().optional(),
